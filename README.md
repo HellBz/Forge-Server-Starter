@@ -23,4 +23,4 @@ How to Install:<br>
 • upload the Forge-Server-Starter<br>
 • create an empty server.properties<br>
 • set Java to 16<br>
-• Start your Server and enjoy (bearbeitet) 
+• Start your Server and enjoy
