@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Forge-Server-Starter:jar">
+    <output-path>$PROJECT_DIR$/out/compiled</output-path>
+    <root id="archive" name="minecraft_server.jar">
+      <element id="module-output" name="Forge-Server-Starter" />
+    </root>
+  </artifact>
+</component>
