@@ -7,7 +7,7 @@ import java.util.Properties;
 
 public class CheckFiles {
 
-    public static void EULA() throws IOException {
+    public static void Eula() throws IOException {
 
         File eulaFile = new File("eula.txt");
 
@@ -43,7 +43,7 @@ public class CheckFiles {
         }
     }
 
-    public static void createStartFile() throws IOException {
+    public static void StartFile() throws IOException {
 
         if (ServerStarter.OS.contains("win")) {
             Until.LogInfo("Creating Windows Start-File.");
@@ -61,33 +61,63 @@ public class CheckFiles {
         }
     }
 
-    public static void configFile() throws IOException {
+    public static void ConfigFile() throws IOException {
 
         File configFile = new File("server_starter.conf");
 
         if (configFile.exists()) {
 
             FileReader configReader = new FileReader(configFile);
-
             ServerStarter.configProps = new Properties();
-
             ServerStarter.configProps.load(configReader);
 
             configReader.close();
 
-        }else{
+        } else {
             if (configFile.createNewFile()) {
 
                 FileWriter writerconfig = new FileWriter(configFile);
 
                 ServerStarter.configProps = new Properties();
-                ServerStarter.configProps.setProperty("debug",        "false");
-                ServerStarter.configProps.setProperty("log_to_file",  "false");
-                ServerStarter.configProps.setProperty("timezone",     "UCT");
+                ServerStarter.configProps.setProperty("debug", "false");
+                ServerStarter.configProps.setProperty("log_to_file", "false");
+                ServerStarter.configProps.setProperty("timezone", "UCT");
 
                 ServerStarter.configProps.store(writerconfig, "Nitrado - Server-Starter Configuration");
 
                 writerconfig.close();
+            }
+        }
+    }
+
+    public static void LogFile(){
+
+        if (Objects.equals( ServerStarter.configProps.getProperty("log_to_file"), "true")) {
+
+            File directory = new File("logs/");
+            if (!directory.exists()) {
+                directory.mkdir();
+                // If you require it to make the entire directory path including parents,
+                // use directory.mkdirs(); here instead.
+            }
+
+            if (directory.exists()) {
+
+                File file = new File("logs/server-starter.log");
+
+                if (file.exists() && file.isFile()) {
+                    file.delete();
+                }
+
+                if (!file.exists()) {
+
+                    try {
+                        file.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
             }
         }
     }

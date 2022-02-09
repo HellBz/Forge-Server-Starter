@@ -12,11 +12,9 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static javax.imageio.ImageIO.read;
 import static net.nitrado.forge.Until.*;
 
 
-//public class ServerStarter implements ActionListener {
 public class ServerStarter {
 
     public static Properties configProps;
@@ -74,7 +72,8 @@ public class ServerStarter {
         List<String> arguments = runtimeMxBean.getInputArguments();
         String[] startupParameter = arguments.toArray(new String[0]);
 
-        CheckFiles.configFile();
+        CheckFiles.ConfigFile();
+        CheckFiles.LogFile();
         //Set local Zimetone
         if ( ServerStarter.configProps.getProperty("timezone") != "UTC" ) {
             System.setProperty("user.timezone", ServerStarter.configProps.getProperty("timezone") );
@@ -87,12 +86,12 @@ public class ServerStarter {
             //
             if ( Arrays.toString(args).toLowerCase().contains("-xmx") || Arrays.toString(args).toLowerCase().contains("-xms") || Arrays.toString(startupParameter).toLowerCase().contains("-xmx") || Arrays.toString(startupParameter).toLowerCase().contains("-xms") ){
                 new ServerStarter();
-                LogInfo("SCRIPT USE -Xmx and -Xms for Start.");
+                LogDebug("SCRIPT USE -Xmx and -Xms for Start.");
             }else{
                 LogInfo("PLS use -Xmx and -Xms for start up this script.");
                 JFrame jFrame = new JFrame();
                 JOptionPane.showMessageDialog(jFrame, "Script only work in Batch-Mode!\nStartfile for Batch-Mode is created.");
-                CheckFiles.createStartFile();
+                CheckFiles.StartFile();
                 System.exit(0);
             }
         }
@@ -215,16 +214,13 @@ public class ServerStarter {
         where.toArray(CMD_ARRAY);
 
         //Check Eula-File
-        CheckFiles.EULA();
+        CheckFiles.Eula();
 
         Until.LogInfo("");
         Until.LogInfo("Server is Running in TimeZone: " + ServerStarter.configProps.getProperty("timezone") );
         Until.LogInfo("More timezones in this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones " );
         Until.LogInfo("Setup your own timezone in server_starter.conf");
         Until.LogInfo("");
-
-        //Until.LogInfo("DEBUG: " + configProps.getProperty("debug") );
-
         Until.LogInfo("Start FORGE " + forge_version + " Server");
         Until.LogInfo("-----------------------------------------------");
         ProcessBuilder server_builder = new ProcessBuilder(CMD_ARRAY);
@@ -265,6 +261,7 @@ public class ServerStarter {
         Scanner scanner = new Scanner(System.in);
         Thread console = new Thread(() -> {
             while (true) {
+
                 String input = scanner.nextLine();
                 if (input.equals(""))
                     break;
