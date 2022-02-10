@@ -24,3 +24,12 @@ How to Install:<br>
 • create an empty server.properties<br>
 • set Java to 16<br>
 • Start your Server and enjoy
+
+FEATURES:
+• Log to File Function
+• colored Log
+• opinion for debug
+• automatic set eula true
+• timezone feature
+• config-file for settings above
+• automatic create Batch-Files
