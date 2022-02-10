@@ -25,11 +25,11 @@ How to Install:<br>
 • set Java to 16<br>
 • Start your Server and enjoy
 
-FEATURES:
-• Log to File Function
-• colored Log
-• opinion for debug
-• automatic set eula true
-• timezone feature
-• config-file for settings above
-• automatic create Batch-Files
+FEATURES:<br>
+• Log to File Function<br>
+• colored Log<br>
+• opinion for debug<br>
+• automatic set eula true<br>
+• timezone feature<br><br>
+• config-file for settings above<br>
+• automatic create Batch-Files<br>
