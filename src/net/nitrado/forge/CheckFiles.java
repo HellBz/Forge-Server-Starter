@@ -81,7 +81,7 @@ public class CheckFiles {
                 ServerStarter.configProps = new Properties();
                 ServerStarter.configProps.setProperty("debug", "false");
                 ServerStarter.configProps.setProperty("log_to_file", "false");
-                ServerStarter.configProps.setProperty("timezone", "UCT");
+                ServerStarter.configProps.setProperty("timezone", "UTC");
 
                 ServerStarter.configProps.store(writerconfig, "Nitrado - Server-Starter Configuration");
 
