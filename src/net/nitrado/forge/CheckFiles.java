@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.Objects;
 import java.util.Properties;
 
-
 public class CheckFiles {
 
     public static void Eula() throws IOException {
@@ -16,7 +15,6 @@ public class CheckFiles {
         if (eulaFile.exists()) {
             Properties eulaProps = new Properties();
             FileReader eulaReader = new FileReader(eulaFile);
-
             // load the properties file and close
             eulaProps.load(eulaReader);
             eulaReader.close();
@@ -76,16 +74,16 @@ public class CheckFiles {
         } else {
             if (configFile.createNewFile()) {
 
-                FileWriter writerconfig = new FileWriter(configFile);
+                FileWriter writerConfig = new FileWriter(configFile);
 
                 ServerStarter.configProps = new Properties();
                 ServerStarter.configProps.setProperty("debug", "false");
                 ServerStarter.configProps.setProperty("log_to_file", "false");
                 ServerStarter.configProps.setProperty("timezone", "UTC");
 
-                ServerStarter.configProps.store(writerconfig, "Nitrado - Server-Starter Configuration");
+                ServerStarter.configProps.store(writerConfig, "Nitrado - Server-Starter Configuration");
 
-                writerconfig.close();
+                writerConfig.close();
             }
         }
     }

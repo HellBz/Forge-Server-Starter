@@ -8,8 +8,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Objects;
 
-import static net.nitrado.forge.ServerStarter.display;
-
 public class Until {
 
     // Define Text Colors
@@ -41,9 +39,6 @@ public class Until {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        if (display != null )
-            display.append( CurrentTime() + "[F-S-S/INFO] " + cleanLog(message) + System.lineSeparator() );
     }
 
     public static void LogWarning(final String message) {
@@ -54,8 +49,6 @@ public class Until {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (display != null )
-            display.append( CurrentTime() + "[F-S-S/WARNING] " + cleanLog(message) + System.lineSeparator() );
     }
 
     public static void LogError(final String message) {
@@ -66,8 +59,6 @@ public class Until {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (display != null )
-            display.append( CurrentTime() + "[F-S-S/ERROR] " + cleanLog(message) + System.lineSeparator() );
     }
 
     public static void LogDebug(final String message) {
@@ -78,13 +69,11 @@ public class Until {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if (display != null)
-                display.append(CurrentTime() + "[F-S-S/DEBUG] " + cleanLog(message) + System.lineSeparator());
         }
     }
 
     private static String CurrentTime() {
-        if ( ServerStarter.configProps.getProperty("timezone") != "UTC" ) {
+        if (!ServerStarter.configProps.getProperty("timezone").equals("UTC")) {
             ZoneId z = ZoneId.of(ServerStarter.configProps.getProperty("timezone"));
             return "[" + ZonedDateTime.now(z).format(DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT)) + "] ";
         }else{
@@ -93,7 +82,7 @@ public class Until {
     }
 
     private static String cleanLog(String message) {
-        return message.replaceAll("\\x1b\\[[0-9;]*m", "");
+        return message.replaceAll("\\x1b\\[[\\d;]*m", "");
     }
 
     public static void doLog(final String message) throws IOException {
