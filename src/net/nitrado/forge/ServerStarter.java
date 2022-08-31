@@ -147,7 +147,16 @@ public class ServerStarter {
         Until.LogDebug("Building Startup-Parameter");
 
         List<String> where = new ArrayList<>();
-        where.add("java");
+
+        if ( ServerStarter.configProps.getProperty("java_path") != null && !ServerStarter.configProps.getProperty("java_path").equals("java")  ) {
+            where.add( ServerStarter.configProps.getProperty("java_path") );
+            Until.LogDebug("Use Custom Java Path: " + ServerStarter.configProps.getProperty("java_path") );
+        }else{
+            where.add("java");
+            Until.LogDebug("Use Standart Java Path");
+
+        }
+
         Collections.addAll(where, startupParameter);
 
         if (ServerStarter.configProps.getProperty("timezone") != null) {

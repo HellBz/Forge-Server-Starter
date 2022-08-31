@@ -80,6 +80,7 @@ public class CheckFiles {
                 ServerStarter.configProps.setProperty("debug", "false");
                 ServerStarter.configProps.setProperty("log_to_file", "false");
                 ServerStarter.configProps.setProperty("timezone", "UTC");
+                ServerStarter.configProps.setProperty("java_path", "java");
 
                 ServerStarter.configProps.store(writerConfig, "Nitrado - Server-Starter Configuration");
 
