@@ -1,2 +1,4 @@
 test/
 server_starter.conf
+out/production/Forge-Server-Starter/net/nitrado/forge/ServerStarter.class
+out/compiled/minecraft_server.jar
