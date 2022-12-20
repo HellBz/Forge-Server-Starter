@@ -1,4 +1,4 @@
-package de.hellbz.forge;
+package de.hellbz.forge.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,9 +7,9 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static de.hellbz.forge.Until.LogInfo;
+import static de.hellbz.forge.Utils.Data.LogInfo;
 
-public class installCurseLoader {
+public class Curse {
 
 
         public static boolean installCurseLoader( String installerFile ) {

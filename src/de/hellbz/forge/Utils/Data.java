@@ -1,4 +1,6 @@
-package de.hellbz.forge;
+package de.hellbz.forge.Utils;
+
+import de.hellbz.forge.ServerStarter;
 
 import java.awt.*;
 import java.io.*;
@@ -8,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Objects;
 
-public class Until {
+public class Data {
 
     // Define Text Colors
     public static final String TXT_RESET =  "\u001B[0m";
@@ -35,7 +37,7 @@ public class Until {
 
         System.out.println( CurrentTime() + TXT_GREEN + "[F-S-S/INFO] " + TXT_RESET + message );
         try {
-            Until.doLog( CurrentTime() + "[F-S-S/INFO] " + cleanLog(message) );
+            Data.doLog( CurrentTime() + "[F-S-S/INFO] " + cleanLog(message) );
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,7 +47,7 @@ public class Until {
 
         System.out.println( CurrentTime() + TXT_YELLOW + "[F-S-S/WARNING] " + TXT_RESET + message );
         try {
-            Until.doLog( CurrentTime() + "[F-S-S/WARNING] " + cleanLog(message) );
+            Data.doLog( CurrentTime() + "[F-S-S/WARNING] " + cleanLog(message) );
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -55,7 +57,7 @@ public class Until {
 
         System.out.println( CurrentTime() + TXT_RED + "[F-S-S/ERROR] " + TXT_RESET + message );
         try {
-            Until.doLog( CurrentTime() + "[F-S-S/ERROR] " + cleanLog(message) );
+            Data.doLog( CurrentTime() + "[F-S-S/ERROR] " + cleanLog(message) );
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -65,7 +67,7 @@ public class Until {
         if (Objects.equals(ServerStarter.configProps.getProperty("debug"), "true")) {
             System.out.println(CurrentTime() + TXT_CYAN + "[F-S-S/DEBUG] " + TXT_RESET + message);
             try {
-                Until.doLog( CurrentTime() + "[F-S-S/DEBUG] " + cleanLog(message) );
+                Data.doLog( CurrentTime() + "[F-S-S/DEBUG] " + cleanLog(message) );
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -94,7 +96,7 @@ public class Until {
         }
     }
 
-    static boolean isReallyHeadless() {
+    public static boolean isReallyHeadless() {
         if (GraphicsEnvironment.isHeadless()) {
             return true;
         }

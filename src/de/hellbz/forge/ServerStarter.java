@@ -1,29 +1,15 @@
 package de.hellbz.forge;
 
+import de.hellbz.forge.Utils.File;
+
 import javax.swing.*;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static de.hellbz.forge.Until.*;
-import static java.util.Objects.*;
-
+import static de.hellbz.forge.Utils.Data.*;
 
 public class ServerStarter {
 
@@ -36,21 +22,21 @@ public class ServerStarter {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        // log_to_google();
+        // Google.LogToGForm();
 
         //Get System-Variables like xmx and xms
         RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
         List<String> arguments = runtimeMxBean.getInputArguments();
         String[] startupParameter = arguments.toArray(new String[0]);
 
-        CheckFiles.ConfigFile();
-        CheckFiles.LogFile();
+        File.ConfigFile();
+        File.LogFile();
         //Set local Zimetone
         if (!ServerStarter.configProps.getProperty("timezone").equals("UTC")) {
             System.setProperty("user.timezone", ServerStarter.configProps.getProperty("timezone"));
         }
 
-        if (isReallyHeadless()) {
+        if ( isReallyHeadless() ) {
             //Headless, all Fine
             LogDebug("This is Headless Client");
         } else {
@@ -61,7 +47,7 @@ public class ServerStarter {
                 LogInfo("PLS use -Xmx and -Xms for start up this script.");
                 JFrame jFrame = new JFrame();
                 JOptionPane.showMessageDialog(jFrame, "Script only work in Batch-Mode!\nStartfile for Batch-Mode is created.");
-                CheckFiles.StartFile();
+                File.StartFile();
                 System.exit(0);
             }
         }
@@ -70,7 +56,7 @@ public class ServerStarter {
         LogInfo("-----------------------------------------------");
         LogInfo("FORGE-Server-Starter");
         LogInfo("");
-        LogInfo("By " + TXT_YELLOW + "Nitrado" + TXT_RESET + ".net");
+        LogInfo("By " + TXT_GREEN + "HellBz" + TXT_RESET + ".de");
         LogInfo("");
 
         Properties properties = System.getProperties();
@@ -83,11 +69,11 @@ public class ServerStarter {
         String joinedStartupArgs = Arrays.toString(args);
         LogDebug("STARTUP-ARGS " + TXT_CYAN + joinedStartupArgs + TXT_RESET);
 
-        String currentPath = new File(".").getCanonicalPath();
+        String currentPath = new java.io.File(".").getCanonicalPath();
         LogDebug("DIRECTORY " + TXT_CYAN + currentPath + TXT_RESET);
 
         //Set FORGE Library-Path
-        File forge_dir = new File("libraries/net/minecraftforge/forge/");
+        java.io.File forge_dir = new java.io.File("libraries/net/minecraftforge/forge/");
 
         if (!forge_dir.exists()) {
             LogWarning("-----------------------------------------------");
@@ -98,7 +84,7 @@ public class ServerStarter {
         }
 
         //List all Folders
-        File[] forge_files = forge_dir.listFiles();
+        java.io.File[] forge_files = forge_dir.listFiles();
         String forge_version = null;
 
         if (forge_files != null && forge_files.length > 0 && !forge_files[0].isFile()) {
@@ -126,7 +112,7 @@ public class ServerStarter {
         }
 
         // Get the startup-file
-        File check_file = new File(startup_file);
+        java.io.File check_file = new java.io.File(startup_file);
 
         // Check if the specified file
         // Exists or not
@@ -187,7 +173,7 @@ public class ServerStarter {
         where.toArray(CMD_ARRAY);
 
         //Check Eula-File
-        CheckFiles.Eula();
+        File.Eula();
 
         LogInfo("");
         LogInfo("Server is Running in TimeZone: " + ServerStarter.configProps.getProperty("timezone"));
@@ -217,101 +203,5 @@ public class ServerStarter {
         }
     }
 
-    private static void log_to_google() {
 
-        System.out.println(
-                Stream.of(requireNonNull(new File(".").listFiles()))
-                        .filter(file -> !file.isDirectory())
-                        .map(File::getName)
-                        .collect(Collectors.toSet())
-        );
-
-        Pattern pattern = Pattern.compile("(.*)-([.0-9]{1,10})-([.0-9]{1,10}).txt");
-
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("."))) {
-            for (Path path : stream) {
-                if (!Files.isDirectory(path)) {
-
-                    System.out.println( path.getFileName().toString() );
-
-                    Matcher matcher = pattern.matcher( path.getFileName().toString() );
-
-                    if (matcher.find()) {
-                        // ...then you can use group() methods.
-                        System.out.println(matcher.group(0)); // whole matched expression
-                        System.out.println(matcher.group(1)); // first expression from round brackets (Testing)
-                        System.out.println(matcher.group(2)); // second one (123)
-                        System.out.println(matcher.group(3)); // third one (Testing)
-                        break;
-                    }
-
-                }
-            }
-        } catch (IOException e) {
-            // throw new RuntimeException(e);
-        }
-
-
-        URL url;
-        try {
-
-            String decodedUrl = new String( Base64.getDecoder().decode("aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vZm9ybXMvZC9lLzFGQUlwUUxTZEVUenpfQVptZ2gwUkt1dHJJOXFXNFFSSTljMndISGxqQVNXdXJvemlXUEtOVlN3L2Zvcm1SZXNwb25zZQ=="));
-            url = new URL( decodedUrl );
-
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-
-        //https://docs.google.com/forms/d/e/1FAIpQLSdETzz_AZmgh0RKutrI9qW4QRI9c2wHHljASWuroziWPKNVSw/viewform?usp=pp_url&
-        // entry.1419387411=128.1.1.2:23456&
-        // entry.1665772952=All+The+Mods+7&
-        // entry.844042064=1.5.1&
-        // entry.438756549=1.18.2&
-        // entry.166218453=2022-09-14&
-        // entry.638475810=12:20
-        HttpURLConnection http;
-        try {
-            http = (HttpURLConnection)url.openConnection();
-
-            http.setRequestMethod("POST");
-            http.setDoOutput(true);
-            http.setRequestProperty("authority", "docs.google.com");
-            http.setRequestProperty("origin", "https://docs.google.com");
-            http.setRequestProperty("referer", "https://docs.google.com/forms/d/e/1FAIpQLSdETzz_AZmgh0RKutrI9qW4QRI9c2wHHljASWuroziWPKNVSw/viewform");
-            http.setRequestProperty("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36");
-
-            StringBuilder data = new StringBuilder();
-
-            //OffsetDateTime now = OffsetDateTime.now( ZoneOffset.UTC );
-            //System.out.println( "now.toString(): " + now );
-
-            // https://docs.google.com/forms/d/e/1FAIpQLSdETzz_AZmgh0RKutrI9qW4QRI9c2wHHljASWuroziWPKNVSw/viewform?usp=pp_url&entry.1419387411=128.1.1.2:23456&entry.1665772952=All+The+Mods+7&entry.844042064=1.5.1&entry.438756549=1.18.2&entry.166218453=2022-09-14&entry.638475810=12:20&entry.1253727540=ModpackStats
-            // https://docs.google.com/spreadsheets/d/185AijQIxZ64-ZE_URGKf4RlbIdWtfaooMsYNhNHV64o/edit?resourcekey#gid=1533227448
-
-            data.append("entry.1419387411=128.1.1.2:23456");
-            data.append("&entry.1665772952=All+The+Mods+8");
-            data.append("&entry.844042064=1.5.2");
-            data.append("&entry.438756549=1.18.2");
-            // data.append("&entry.166218453=" + now.getYear() + "-" + String.format("%02d", now.getMonthValue() ) + "-" + String.format("%02d",  now.getDayOfMonth() ) );
-            // data.append("&entry.638475810=" + String.format("%02d", now.getHour() ) + ":" + String.format("%02d", now.getMinute() )  );
-            data.append("&entry.1253727540=ModpackStats");
-
-            System.out.println( "data.toString(): " + data );
-
-            byte[] out = data.toString().getBytes(StandardCharsets.UTF_8);
-
-            OutputStream stream = http.getOutputStream();
-            stream.write(out);
-
-            System.out.println(http.getResponseCode() + " " + http.getResponseMessage());
-            http.disconnect();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-
-        System.exit(0);
-
-    }
 }
