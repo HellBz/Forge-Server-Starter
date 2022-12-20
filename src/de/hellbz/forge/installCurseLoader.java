@@ -1,4 +1,4 @@
-package net.nitrado.forge;
+package de.hellbz.forge;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static net.nitrado.forge.Until.LogInfo;
+import static de.hellbz.forge.Until.LogInfo;
 
 public class installCurseLoader {
 

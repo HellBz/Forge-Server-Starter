@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: net.nitrado.forge.ServerStarter
+Main-Class: de.hellbz.forge.ServerStarter
 

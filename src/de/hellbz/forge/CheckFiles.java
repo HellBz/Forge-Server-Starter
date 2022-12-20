@@ -1,4 +1,4 @@
-package net.nitrado.forge;
+package de.hellbz.forge;
 
 import java.io.*;
 import java.util.Objects;
