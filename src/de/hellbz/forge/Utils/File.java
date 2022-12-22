@@ -7,6 +7,8 @@ import java.io.*;
 import java.util.Objects;
 import java.util.Properties;
 
+import static de.hellbz.forge.ServerStarter.startupError;
+
 public class File {
 
     public static void Eula() throws IOException {
@@ -122,5 +124,24 @@ public class File {
 
             }
         }
+    }
+
+    public static boolean checkExist(String startup_file ) {
+        // Get the startup-file
+        if( startup_file != null ) {
+
+            java.io.File check_file = new java.io.File(startup_file);
+
+            // Check if the specified file
+            // Exists or not
+            if (!check_file.exists() && !startupError) {
+                Data.LogWarning("Start-File cannot be Found. ");
+                startupError = true;
+                return false;
+            } else {
+                startupError = false;
+                return true;
+            }
+        } else return false;
     }
 }
