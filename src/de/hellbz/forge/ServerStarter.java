@@ -103,11 +103,10 @@ public class ServerStarter {
         if ( !libraries_dir.exists() ) {
 
             LogInfo("Check for Forge-Installation-File ...");
-            startupError = Curse.installLoader( currentPath );
-
+            Curse.installLoader( currentPath );
         }
 
-        if ( libraries_dir.exists() ) {
+        if ( libraries_dir.exists() && !startupError ) {
 
             if ( forge_dir.exists()  ) {
                 //Search for new Forge Folder
@@ -182,89 +181,95 @@ public class ServerStarter {
             }
 
             if ( mc_version == null && forge_version == null ) {
-                LogWarning("No Forge-Version could be Found ");
+                LogWarning("No Forge-Version could be Found!");
                 startupError = true;
             }
 
         }
 
-        if ( File.checkExist( startup_file ) && !startupError ) {
+        if ( !startupError ) {
 
-            Data.checkContent(startup_file);
+            if (File.checkExist(startup_file)) {
 
-            LogInfo("Building Startup-Parameter ...");
+                Data.checkContent(startup_file);
 
-            List<String> where = new ArrayList<>();
+                LogInfo("Building Startup-Parameter ...");
 
-            if (ServerStarter.configProps.getProperty("java_path") != null && !ServerStarter.configProps.getProperty("java_path").equals("java")) {
-                where.add(ServerStarter.configProps.getProperty("java_path"));
-                LogDebug("Use Custom Java Path: " + ServerStarter.configProps.getProperty("java_path"));
-            } else {
-                where.add("java");
-                LogDebug("Use Standart Java Path");
-            }
+                List<String> where = new ArrayList<>();
 
-            Collections.addAll(where, startupParameter);
-
-            if (ServerStarter.configProps.getProperty("timezone") != null) {
-                where.add("-Duser.timezone=" + configProps.getProperty("timezone"));
-            }
-
-            if (Integer.parseInt(mcVersionDetail[1]) >= 17) {
-                where.add("@" + startup_file );
-
-                if ( javaVersion < 60 ) {
-                    LogWarning("The Java-Class-Version ist with \"" + javaVersion.toString() + "\" to low to start the Server!"  );
-                    startupError = true;
+                if (ServerStarter.configProps.getProperty("java_path") != null && !ServerStarter.configProps.getProperty("java_path").equals("java")) {
+                    where.add(ServerStarter.configProps.getProperty("java_path"));
+                    LogDebug("Use Custom Java Path: " + ServerStarter.configProps.getProperty("java_path"));
+                } else {
+                    where.add("java");
+                    LogDebug("Use Standart Java Path");
                 }
 
+                Collections.addAll(where, startupParameter);
+
+                if (ServerStarter.configProps.getProperty("timezone") != null) {
+                    where.add("-Duser.timezone=" + configProps.getProperty("timezone"));
+                }
+
+                if (Integer.parseInt(mcVersionDetail[1]) >= 17) {
+                    where.add("@" + startup_file);
+
+                    if (javaVersion < 60) {
+                        LogWarning("The Java-Class-Version ist with \"" + javaVersion.toString() + "\" to low to start the Server!");
+                        startupError = true;
+                    }
+
+                } else {
+                    where.add("-jar");
+                    where.add(startup_file);
+                }
+
+                where.add("nogui");
+
+                CMD_ARRAY = new String[where.size()];
+                where.toArray(CMD_ARRAY);
             } else {
-                where.add("-jar");
-                where.add( startup_file );
+                startupError = true;
+                LogWarning("The Start-File \"" + startup_file + "\" does not exist!");
             }
-
-            where.add("nogui");
-
-            CMD_ARRAY = new String[where.size()];
-            where.toArray(CMD_ARRAY);
-        }else{
-            startupError = true;
-            LogWarning("The Start-File \"" + startup_file + "\" does not exist"  );
         }
 
             //Check Eula-File
         if ( !startupError ) { File.Eula(); }
 
-        if ( CMD_ARRAY != null && !startupError ) {
-            LogInfo("");
-            LogInfo("Server is Running in TimeZone: " + ServerStarter.configProps.getProperty("timezone"));
-            LogInfo("More timezones in this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones ");
-            LogInfo("Setup your own timezone in server_starter.conf");
-            LogInfo("");
-            LogInfo("Start FORGE " + forge_version + " Server");
-            LogInfo("-----------------------------------------------");
+        if ( !startupError ) {
 
-            //DEBUG StartUp Commands
-            LogDebug("Startup-ARRAY " + TXT_BLUE + Arrays.toString(CMD_ARRAY) + TXT_RESET);
+            if ( CMD_ARRAY != null ) {
+                LogInfo("");
+                LogInfo("Server is Running in TimeZone: " + ServerStarter.configProps.getProperty("timezone"));
+                LogInfo("More timezones in this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones ");
+                LogInfo("Setup your own timezone in server_starter.conf");
+                LogInfo("");
+                LogInfo("Start FORGE " + forge_version + " Server");
+                LogInfo("-----------------------------------------------");
 
-            Process serverProcess = new ProcessBuilder(CMD_ARRAY)
-                    .inheritIO()
-                    .start();
+                //DEBUG StartUp Commands
+                LogDebug("Startup-ARRAY " + TXT_BLUE + Arrays.toString(CMD_ARRAY) + TXT_RESET);
 
-            int exitCode = serverProcess.waitFor();
+                Process serverProcess = new ProcessBuilder(CMD_ARRAY)
+                        .inheritIO()
+                        .start();
 
-            if (exitCode == 0) {
-                LogWarning("Server is successfully stopped.");
-                System.exit(0);
+                int exitCode = serverProcess.waitFor();
+
+                if (exitCode == 0) {
+                    LogWarning("Server is successfully stopped.");
+                    System.exit(0);
+                } else {
+                    LogError("Server is Crashed with Exit-Code: " + exitCode);
+                    LogWarning("Please check your files and upload them to the server again if necessary. ");
+                    LogError("EXIT Server-Starter ");
+                    System.exit(Integer.parseInt(String.valueOf(exitCode)));
+                }
             } else {
-                LogError("Server is Crashed with Exit-Code: " + exitCode);
-                LogWarning("Please check your files and upload them to the server again if necessary. ");
-                LogError("EXIT Server-Starter ");
-                System.exit(Integer.parseInt(String.valueOf(exitCode)));
+                startupError = true;
+                LogWarning("Could not build Start-Parameter!");
             }
-        } else if ( CMD_ARRAY == null ) {
-            startupError = true;
-            LogWarning("Could not build Start-Parameter.");
         }
 
         if ( startupError ) {

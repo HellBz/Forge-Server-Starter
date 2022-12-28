@@ -9,6 +9,7 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.hellbz.forge.ServerStarter.startupError;
 import static de.hellbz.forge.Utils.Data.*;
 
 public class Curse {
@@ -103,11 +104,16 @@ public class Curse {
 
                                 return false;
                         } catch (IOException | InterruptedException e) {
-                                LogInfo("Problem while installing Loader from " + installPath + File.separator + ' ' + e);
+                                LogWarning("Problem while installing Loader from " + installPath + File.separator + ' ' + e );
+                                startupError = true;
                                 return true;
                         }
+                }else{
+                        LogWarning("No \"libraries\"-Folders and no Installer-File could be found!");
+                        startupError = true;
+                        return true;
                 }
-                return false;
+
         }
 }
 
