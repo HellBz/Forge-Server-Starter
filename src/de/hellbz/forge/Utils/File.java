@@ -129,19 +129,23 @@ public class File {
     public static boolean checkExist(String startup_file ) {
         // Get the startup-file
         if( startup_file != null ) {
-
             java.io.File check_file = new java.io.File(startup_file);
 
             // Check if the specified file
             // Exists or not
-            if (!check_file.exists() && !startupError) {
+            if ( !check_file.exists() ) {
                 Data.LogWarning("Start-File cannot be Found. ");
                 startupError = true;
                 return false;
             } else {
+                //Data.LogInfo("Start-File Found. ");
                 startupError = false;
                 return true;
             }
-        } else return false;
+        } else {
+            Data.LogWarning("Start-File is empty!");
+            startupError = true;
+            return false;
+        }
     }
 }

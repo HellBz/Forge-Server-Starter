@@ -56,7 +56,7 @@ public class Curse {
                                 LogInfo("Attempting to start Server " + installerFile);
                                 LogInfo("Filename: " + filename);
                                 LogInfo("Directory: " + installPath);
-                                LogInfo("Attempting to use installer from " + installPath);
+                                //LogInfo("Attempting to use installer from " + installPath);
                                 LogInfo("Starting installation of Loader, installer output incoming");
                                 LogInfo("Check log from installer for more information");
                                 final Process start;
@@ -107,7 +107,6 @@ public class Curse {
                                 return true;
                         }
                 }
-
                 return false;
         }
 }
