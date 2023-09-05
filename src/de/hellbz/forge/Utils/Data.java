@@ -7,6 +7,7 @@ import java.io.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
@@ -142,6 +143,28 @@ public class Data {
                 LogWarning("Illegal characters found in Server-Args ");
                 startupError = true;
             }
+        }
+    }
+
+    // Benutzerdefinierte Vergleichsfunktion für Versionsnummern
+    public static class VersionComparator implements Comparator<String> {
+        @Override
+        public int compare(String v1, String v2) {
+            String[] parts1 = v1.split("\\.");
+            String[] parts2 = v2.split("\\.");
+
+            int minLength = Math.min(parts1.length, parts2.length);
+
+            for (int i = 0; i < minLength; i++) {
+                int num1 = Integer.parseInt(parts1[i]);
+                int num2 = Integer.parseInt(parts2[i]);
+
+                if (num1 != num2) {
+                    return Integer.compare(num1, num2);
+                }
+            }
+
+            return Integer.compare(parts1.length, parts2.length);
         }
     }
 }

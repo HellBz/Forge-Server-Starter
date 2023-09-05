@@ -12,12 +12,14 @@ import java.lang.management.RuntimeMXBean;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static de.hellbz.forge.Utils.Data.*;
 
 public class ServerStarter {
 
     public static Properties configProps;
+    public static Properties autoProps;
     public static boolean startupError = false;
 
     public static String mc_version = null;
@@ -83,7 +85,7 @@ public class ServerStarter {
             if (Arrays.toString(args).toLowerCase().contains("-xmx") || Arrays.toString(args).toLowerCase().contains("-xms") || Arrays.toString(startupParameter).toLowerCase().contains("-xmx") || Arrays.toString(startupParameter).toLowerCase().contains("-xms")) {
                 LogDebug("SCRIPT USE -Xmx and -Xms for Start.");
             } else {
-                startupError = true;
+                //startupError = true;
                 LogWarning("PLS use -Xmx and -Xms for start up this script.");
                 JFrame jFrame = new JFrame();
                 JOptionPane.showMessageDialog(jFrame, "Script only work in Batch-Mode!\nStartfile for Batch-Mode is created.");
@@ -100,7 +102,15 @@ public class ServerStarter {
         //Start-File
         String startup_file = null;
 
+        //Try Auto-Installer
         if ( !libraries_dir.exists() ) {
+
+            LogInfo("Check for Auto-Installation-File ...");
+            Curse.downloadLoader( currentPath );
+        }
+
+        //try to use Installer-File
+        if ( !libraries_dir.exists() && !startupError ) {
 
             LogInfo("Check for Forge-Installation-File ...");
             Curse.installLoader( currentPath );
@@ -202,7 +212,7 @@ public class ServerStarter {
                     LogDebug("Use Custom Java Path: " + ServerStarter.configProps.getProperty("java_path"));
                 } else {
                     where.add("java");
-                    LogDebug("Use Standart Java Path");
+                    LogDebug("Use Standard Java Path");
                 }
 
                 Collections.addAll(where, startupParameter);
@@ -215,7 +225,7 @@ public class ServerStarter {
                     where.add("@" + startup_file);
 
                     if (javaVersion < 60) {
-                        LogWarning("The Java-Class-Version ist with \"" + javaVersion.toString() + "\" to low to start the Server!");
+                        LogWarning("The Java-Class-Version is with \"" + javaVersion.toString() + "\" to low, to start the Server!");
                         startupError = true;
                     }
 
