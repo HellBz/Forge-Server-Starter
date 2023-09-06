@@ -85,7 +85,7 @@ public class ServerStarter {
             if (Arrays.toString(args).toLowerCase().contains("-xmx") || Arrays.toString(args).toLowerCase().contains("-xms") || Arrays.toString(startupParameter).toLowerCase().contains("-xmx") || Arrays.toString(startupParameter).toLowerCase().contains("-xms")) {
                 LogDebug("SCRIPT USE -Xmx and -Xms for Start.");
             } else {
-                //startupError = true;
+                startupError = true;
                 LogWarning("PLS use -Xmx and -Xms for start up this script.");
                 JFrame jFrame = new JFrame();
                 JOptionPane.showMessageDialog(jFrame, "Script only work in Batch-Mode!\nStartfile for Batch-Mode is created.");
@@ -103,7 +103,7 @@ public class ServerStarter {
         String startup_file = null;
 
         //Try Auto-Installer
-        if ( !libraries_dir.exists() ) {
+        if ( !libraries_dir.exists() && !startupError ) {
 
             LogInfo("Check for Auto-Installation-File ...");
             Curse.downloadLoader( currentPath );

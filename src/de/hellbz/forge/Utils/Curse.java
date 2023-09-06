@@ -192,7 +192,7 @@ public class Curse {
                                 return false;
                         }
 
-                        LogInfo( mcVersion + forgeVersion );
+                        //LogInfo( mcVersion + forgeVersion );
                         String regexmcVersion = "^[0-9.]+$|^latest$";
                         String regexforgeVersion = "^[0-9.]+$|^latest$|^recommended$";
 
@@ -241,7 +241,7 @@ public class Curse {
                         LogWarning("Not found the \"forge-auto-install.txt\", start manuell installation-Process.");
                         LogInfo("FORGE is available in the following Versions:");
 
-                        LogInfo( ForgeLatestVersions.toString() );
+                        //LogInfo( ForgeLatestVersions.toString() );
 
                         String ForgeVersionsAsString = ForgeLatestVersions.keySet().stream().collect(Collectors.joining(", "));
                         LogInfo( ForgeVersionsAsString );
@@ -269,7 +269,9 @@ public class Curse {
                                 downloadLoader( installPath );
                         }
 
-                        LogInfo("Wich FORGE-Version you like to install [ eg. " + ForgeLatestVersions.get( mcVersion) + " ]:");
+                        Map<String, String> ForgeRecommendedVersions = Curse.getRecommendedVersions();
+                        LogInfo("Wich FORGE-Version you like to install [ Latest:  " + ForgeLatestVersions.get( mcVersion) + ", Recommended:  " + ForgeRecommendedVersions.get( mcVersion) + " ]:");
+                        LogInfo("You can also install all other Versions, listed on this Site: https://files.minecraftforge.net/net/minecraftforge/forge/index_" + mcVersion + ".html");
                         String forgeVersionInput = in.nextLine();
 
                         StringBuilder forgeVersionFiltered = new StringBuilder();
@@ -289,9 +291,28 @@ public class Curse {
         }
 
         private static boolean downloadInstallerFile(String installPath, String version, String build) {
-                String fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/"
-                        + version + "-" + build + "/forge-" + version + "-" + build + "-installer.jar";
-                String localFilePath = installPath + "/forge-" + version + "-" + build + "-installer.jar"; // Passe den Pfad an
+
+                String fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "/forge-" + version + "-" + build + "-installer.jar";
+                String localFilePath = installPath + "/" + "forge-" + version + "-" + build + "-installer.jar";
+                Comparator<String> versionComparator = new VersionComparator();
+                int check_1_7_10 = versionComparator.compare(version, "1.7.10");
+                int check_1_7_2 = versionComparator.compare(version, "1.7.2");
+                int check_1_5_2 = versionComparator.compare(version, "1.5.2");
+                int check_1_3_2 = versionComparator.compare(version, "1.3.2");
+
+                if (check_1_5_2 < 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "/forge-" + version + "-" + build + "-universal.zip";
+                        localFilePath = installPath + "/" + "forge-" + version + "-" + build + "-universal.zip";
+                } else if (check_1_3_2 < 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "/forge-" + version + "-" + build + "-server.zip";
+                        localFilePath = installPath + "/" + "forge-" + version + "-" + build + "-server.zip";
+                } else if (check_1_7_10 == 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "-" + version + "/forge-" + version + "-" + build + "-" + version + "-installer.jar";
+                } else if (check_1_7_2 == 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "-mc172/forge-" + version + "-" + build + "-mc172-installer.jar";
+                }
+
+                LogDebug( "Download FORGE from: " + fileURL );
 
                 try {
                         URL url = new URL(fileURL);
@@ -330,7 +351,7 @@ public class Curse {
 
                 java.io.File[] currentFiles = currentDir.listFiles();
 
-                Pattern pattern = Pattern.compile("forge-([.0-9]+)-([.0-9]+)-([universal|installer]+).([jar|zip]+)", Pattern.CASE_INSENSITIVE);
+                Pattern pattern = Pattern.compile("forge-([.0-9]+)-([.0-9]+)-([universal|installer|server]+).([jar|zip]+)", Pattern.CASE_INSENSITIVE);
 
                 String installerFile = null;
                 String mcVersion = null;
@@ -364,8 +385,8 @@ public class Curse {
                                 final String filename = new File(installerFile).getName();
 
                                 LogInfo("Attempting to start Server " + installerFile);
-                                LogInfo("Filename: " + filename);
-                                LogInfo("Directory: " + installPath);
+                                LogDebug("Filename: " + filename);
+                                LogDebug("Directory: " + installPath);
                                 //LogInfo("Attempting to use installer from " + installPath);
                                 LogInfo("Starting installation of Loader, installer output incoming");
                                 LogInfo("Check log from installer for more information");
@@ -379,39 +400,52 @@ public class Curse {
 
                                 final Process installer = start = new ProcessBuilder(new String[]{ javaStart , "-jar", installerFile, "nogui", "--installServer"}).directory(new File(installPath)).start();
                                 final Scanner serverLog = new Scanner(start.getInputStream());
-                                while (serverLog.hasNextLine()) {
+                               while (serverLog.hasNextLine()) {
                                         final String println = serverLog.nextLine();
                                         LogForge(println);
                                 }
                                 installer.waitFor();
-                                LogInfo("Done installing loader, deleting installer!");
+                                //Installer is done
 
-                                final File installerFile2 = new File( installPath + File.separator + installerFile);
-                                if (installerFile2.exists()) {
-                                        Files.delete(installerFile2.toPath());
+                                java.io.File libraries_dir = new java.io.File("libraries/");
+                                if ( libraries_dir.exists() ) {
+
+                                        LogInfo("Done installing loader...");
+                                        LogInfo("Deleting leftover Files, after installation!");
+
+                                        final File installerFile2 = new File( installPath + File.separator + installerFile);
+                                        if (installerFile2.exists()) {
+                                                Files.delete(installerFile2.toPath());
+                                        }
+
+                                        final File installerFileLog = new File(installPath + File.separator + installerFile + ".log");
+                                        if (installerFileLog.exists()) {
+                                                Files.delete(installerFileLog.toPath());
+                                        }
+
+                                        final File installerFileRunBat = new File(installPath + File.separator + "run.bat");
+                                        if (installerFileRunBat.exists()) {
+                                                Files.delete(installerFileRunBat.toPath());
+                                        }
+
+                                        final File installerFileRunSh = new File(installPath + File.separator + "run.sh");
+                                        if (installerFileRunSh.exists()) {
+                                                Files.delete(installerFileRunSh.toPath());
+                                        }
+
+                                        final File installerFileJavaArgs = new File(installPath + File.separator + "user_jvm_args.txt");
+                                        if (installerFileJavaArgs.exists()) {
+                                                Files.delete(installerFileJavaArgs.toPath());
+                                        }
+
+                                        return false;
+
+                                }else{
+                                        LogWarning("Problem while installing FORGE, \"libraries\"-Folder not successfully created.");
+                                        startupError = true;
+                                        return true;
                                 }
 
-                                final File installerFileLog = new File(installPath + File.separator + installerFile + ".log");
-                                if (installerFileLog.exists()) {
-                                        Files.delete(installerFileLog.toPath());
-                                }
-
-                                final File installerFileRunBat = new File(installPath + File.separator + "run.bat");
-                                if (installerFileRunBat.exists()) {
-                                        Files.delete(installerFileRunBat.toPath());
-                                }
-
-                                final File installerFileRunSh = new File(installPath + File.separator + "run.sh");
-                                if (installerFileRunSh.exists()) {
-                                        Files.delete(installerFileRunSh.toPath());
-                                }
-
-                                final File installerFileJavaArgs = new File(installPath + File.separator + "user_jvm_args.txt");
-                                if (installerFileJavaArgs.exists()) {
-                                        Files.delete(installerFileJavaArgs.toPath());
-                                }
-
-                                return false;
                         } catch (IOException | InterruptedException e) {
                                 LogWarning("Problem while installing Loader from " + installPath + File.separator + ' ' + e );
                                 startupError = true;
