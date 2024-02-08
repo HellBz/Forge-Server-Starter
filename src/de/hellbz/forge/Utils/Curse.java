@@ -1,79 +1,48 @@
 package de.hellbz.forge.Utils;
 
-import de.hellbz.forge.ServerStarter;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import java.io.*;
 import java.io.File;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.stream.Collectors;
 
-import static de.hellbz.forge.ServerStarter.startupError;
 import static de.hellbz.forge.Utils.Data.*;
 
 public class Curse {
 
-        public static Map<String, String> getLatestVersions( ) {
-
-                Map<String, String> promoMap = null;
+        public static JSONObject parseJson(String jsonString) {
                 try {
-                        URL url = new URL("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json");
-                        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                        connection.setRequestMethod("GET");
-
-                        int responseCode = connection.getResponseCode();
-                        if (responseCode == HttpURLConnection.HTTP_OK) {
-                                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                                StringBuilder response = new StringBuilder();
-                                String line;
-
-                                while ((line = reader.readLine()) != null) {
-                                        response.append(line);
-                                }
-                                reader.close();
-
-                                String jsonData = response.toString();
-
-                                // Definiere den regulären Ausdruck, um das gewünschte Muster zu finden
-                                String regexPattern = "\"([0-9\\.]+-latest)\": \"([0-9\\.]+)\"";
-                                Pattern pattern = Pattern.compile(regexPattern);
-                                Matcher matcher = pattern.matcher(jsonData);
-
-                                // Erstelle ein HashMap für die gefundenen Schlüssel-Wert-Paare
-                                promoMap = new HashMap<>();
-
-                                while (matcher.find()) {
-                                        String key = matcher.group(1).replace("-latest", "");
-                                        String value = matcher.group(2);
-
-                                        promoMap.put(key, value);
-                                }
-
-                                // Gib das HashMap zurück
-                                //System.out.println(promoMap);
-                                //return promoMap;
-                        } else {
-                                LogError("Failed to get FORGE-Version with Error-Code: " + responseCode);
-                        }
-                } catch (Exception e) {
+                        return new JSONObject(jsonString);
+                } catch (JSONException e) {
                         e.printStackTrace();
+                        return null;
                 }
-
-                // Schlüssel in einer TreeMap sortieren und als Stream abrufen
-                TreeMap<String, String> sortedPromoMap = new TreeMap<>(Collections.reverseOrder(new VersionComparator()));
-                sortedPromoMap.putAll(promoMap);
-
-                return sortedPromoMap;
         }
-
-        public static Map<String, String> getRecommendedVersions( ) {
-
+        public static Map<String, String> getVersions(String mode) {
+                boolean isConnected = Net.isConnected;
                 Map<String, String> promoMap = null;
+
+
+                /*
+                if (!mode.equals("-latest") && !mode.equals("-recommended")) {
+                        throw new IllegalArgumentException("Invalid mode. Mode must be either '-recommended' or '-latest'.");
+                }
+                */
+
+                // Set the default value to "-recommended" if mode is not "-latest"
+                if (!mode.equals("-latest")) {
+                        mode = "-recommended";
+                }else
+                        mode = "-latest";
+
                 try {
                         URL url = new URL("https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json");
                         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -92,24 +61,31 @@ public class Curse {
 
                                 String jsonData = response.toString();
 
-                                // Definiere den regulären Ausdruck, um das gewünschte Muster zu finden
-                                String regexPattern = "\"([0-9\\.]+-recommended)\": \"([0-9\\.]+)\"";
-                                Pattern pattern = Pattern.compile(regexPattern);
-                                Matcher matcher = pattern.matcher(jsonData);
+                                // Parse the JSON data
+                                JSONObject jsonObject = new JSONObject(jsonData);
 
-                                // Erstelle ein HashMap für die gefundenen Schlüssel-Wert-Paare
+                                // Access the "promos" object
+                                JSONObject promosObject = jsonObject.getJSONObject("promos");
+
+                                // Create a HashMap for the found key-value pairs
                                 promoMap = new HashMap<>();
 
-                                while (matcher.find()) {
-                                        String key = matcher.group(1).replace("-recommended", "");
-                                        String value = matcher.group(2);
+                                // Get the keys in the JSON object
+                                Iterator<String> keys = promosObject.keys();
+                                while (keys.hasNext()) {
+                                        String key = keys.next();
+                                        if (key.endsWith(mode)) {
+                                                String value = promosObject.getString(key);
+                                                // Remove the mode from the key
+                                                key = key.replace( mode, "");
 
-                                        promoMap.put(key, value);
+                                                // Check if the cleanedKey contains only numbers and dots
+                                                //if (key.matches("[0-9.]+")) {
+                                                        promoMap.put(key, value);
+                                                //}
+
+                                        }
                                 }
-
-                                // Gib das HashMap zurück
-                                //System.out.println(promoMap);
-                                //return promoMap;
                         } else {
                                 LogError("Failed to get FORGE-Version with Error-Code: " + responseCode);
                         }
@@ -117,7 +93,7 @@ public class Curse {
                         e.printStackTrace();
                 }
 
-                // Schlüssel in einer TreeMap sortieren und als Stream abrufen
+                // Sort the keys in a TreeMap and return it
                 TreeMap<String, String> sortedPromoMap = new TreeMap<>(Collections.reverseOrder(new VersionComparator()));
                 sortedPromoMap.putAll(promoMap);
 
@@ -157,38 +133,39 @@ public class Curse {
 
                         }
                 } catch (Exception e) {
-                        startupError = true;
+                        Config.startupError = true;
                         LogWarning( e.getMessage() );
                 }
 
                 File autoConfigFile = new File("forge-auto-install.txt");
 
-                Map<String, String> ForgeLatestVersions = Curse.getLatestVersions();
+                Map<String, String> ForgeLatestVersions = Curse.getVersions("-latest");
+                // LogInfo( ForgeLatestVersions.toString() );
                 Map.Entry<String, String> firstEntry = ForgeLatestVersions.entrySet().iterator().next();
 
                 if ( autoFile && autoConfigFile.exists() ) {
 
                         // Search MC-Version and Forge in Auto-Installer-File
                         FileReader autoReader = new FileReader(autoConfigFile);
-                        ServerStarter.autoProps = new Properties();
-                        ServerStarter.autoProps.load(autoReader);
+                        Config.autoProps = new Properties();
+                        Config.autoProps.load(autoReader);
                         autoReader.close();
 
-                        mcVersion = ServerStarter.autoProps.getProperty("mc-version");
-                        forgeVersion = ServerStarter.autoProps.getProperty("forge-version");
+                        mcVersion = Config.autoProps.getProperty("mc-version");
+                        forgeVersion = Config.autoProps.getProperty("forge-version");
 
                         if ( mcVersion == null || mcVersion.trim().isEmpty() || forgeVersion == null || forgeVersion.trim().isEmpty() ) {
 
                                 //Write clean Config to File
                                 FileWriter writerConfig = new FileWriter(autoConfigFile);
-                                ServerStarter.autoProps = new Properties();
-                                ServerStarter.autoProps.setProperty("mc-version", "latest" /* firstEntry.getKey() */ );
-                                ServerStarter.autoProps.setProperty("mc-version-info", "like " + firstEntry.getKey() + " or latest" /* firstEntry.getValue() */ );
-                                ServerStarter.autoProps.setProperty("forge-version", "latest" /* firstEntry.getValue() */ );
-                                ServerStarter.autoProps.setProperty("forge-version-info", "like " + firstEntry.getValue() + " , recommended or latest" /* firstEntry.getValue() */ );
-                                ServerStarter.autoProps.store(writerConfig, "Forge Auto-Install Configuration");
+                                Config.autoProps = new Properties();
+                                Config.autoProps.setProperty("mc-version", "latest" /* firstEntry.getKey() */ );
+                                Config.autoProps.setProperty("mc-version-info", "like " + firstEntry.getKey() + " or latest" /* firstEntry.getValue() */ );
+                                Config.autoProps.setProperty("forge-version", "latest" /* firstEntry.getValue() */ );
+                                Config.autoProps.setProperty("forge-version-info", "like " + firstEntry.getValue() + " , recommended or latest" /* firstEntry.getValue() */ );
+                                Config.autoProps.store(writerConfig, "Forge Auto-Install Configuration");
                                 LogWarning("Found Error in the \"forge-auto-install.txt\", saved the File correct, please check the File.");
-                                startupError = true;
+                                Config.startupError = true;
                                 return false;
                         }
 
@@ -202,7 +179,7 @@ public class Curse {
                                 }
                         } else {
                                 LogWarning("The Minecraft-Version \"" + mcVersion + "\" does not expect like [\"" + firstEntry.getKey() + "\"or\"latest\"");
-                                startupError = true;
+                                Config.startupError = true;
                                 return false;
                         }
                         if (mcVersion.matches(regexmcVersion)) {
@@ -211,22 +188,22 @@ public class Curse {
                                                 forgeVersion = ForgeLatestVersions.get( mcVersion );
                                         }else{
                                                 LogWarning("The Minecraft-Version \"" + mcVersion + "\" does not exist in the Latest-Version-List.");
-                                                startupError = true;
+                                                Config.startupError = true;
                                                 return false;
                                         }
                                 } else if ( forgeVersion.equals("recommended") ) {
-                                        Map<String, String> ForgeRecommendedVersions = Curse.getRecommendedVersions();
+                                        Map<String, String> ForgeRecommendedVersions = Curse.getVersions("-recommended");
                                         if ( ForgeRecommendedVersions.containsKey( mcVersion ) )  {
                                                 forgeVersion = ForgeRecommendedVersions.get( mcVersion );
                                         } else {
                                                 LogWarning("The FORGE-Version \"" + forgeVersion + "\" does not exist in the Recommended-Version-List.");
-                                                startupError = true;
+                                                Config.startupError = true;
                                                 return false;
                                         }
                                 }
                         } else {
                                 LogWarning("The FORGE-Version \"" + forgeVersion + "\" does not expect like [\"" + firstEntry.getValue() + "\",\"recommended\"or\"latest\"");
-                                startupError = true;
+                                Config.startupError = true;
                                 return false;
                         }
 
@@ -255,13 +232,15 @@ public class Curse {
                         StringBuilder mcVersionFiltered = new StringBuilder();
 
                         // Überprüfen und nur Zahlen und Punkte akzeptieren
-                        for (char c : mcVersionInput.toCharArray()) {
+                        /*
+                        1.7.10_pre4for (char c : mcVersionInput.toCharArray()) {
                                 if (Character.isDigit(c) || c == '.') {
                                         mcVersionFiltered.append(c);
                                 }
                         }
+                        */
 
-                        mcVersion = String.valueOf(mcVersionFiltered);
+                        mcVersion = String.valueOf(mcVersionInput);
 
                         if ( !ForgeLatestVersions.containsKey(mcVersion) ) {
                                 // Der Schlüssel existiert in der Map nicht
@@ -269,7 +248,7 @@ public class Curse {
                                 downloadLoader( installPath );
                         }
 
-                        Map<String, String> ForgeRecommendedVersions = Curse.getRecommendedVersions();
+                        Map<String, String> ForgeRecommendedVersions = Curse.getVersions("-recommended");
                         LogInfo("Wich FORGE-Version you like to install [ Latest:  " + ForgeLatestVersions.get( mcVersion) + ", Recommended:  " + ForgeRecommendedVersions.get( mcVersion) + " ]:");
                         LogInfo("You can also install all other Versions, listed on this Site: https://files.minecraftforge.net/net/minecraftforge/forge/index_" + mcVersion + ".html");
                         String forgeVersionInput = in.nextLine();
@@ -277,13 +256,14 @@ public class Curse {
                         StringBuilder forgeVersionFiltered = new StringBuilder();
 
                         // Überprüfen und nur Zahlen und Punkte akzeptieren
-                        for (char c : forgeVersionInput.toCharArray()) {
+                        /*for (char c : forgeVersionInput.toCharArray()) {
                                 if (Character.isDigit(c) || c == '.') {
                                         forgeVersionFiltered.append(c);
                                 }
                         }
+                        */
 
-                        forgeVersion = String.valueOf(forgeVersionFiltered);
+                        forgeVersion = String.valueOf(forgeVersionInput);
 
                 }
 
@@ -292,10 +272,13 @@ public class Curse {
 
         private static boolean downloadInstallerFile(String installPath, String version, String build) {
 
+                boolean isConnected = Net.isConnected;
+
                 String fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "/forge-" + version + "-" + build + "-installer.jar";
                 String localFilePath = installPath + "/" + "forge-" + version + "-" + build + "-installer.jar";
                 Comparator<String> versionComparator = new VersionComparator();
                 int check_1_7_10 = versionComparator.compare(version, "1.7.10");
+                int check_1_7_10_pre = versionComparator.compare(version, "1.7.10_pre4");
                 int check_1_7_2 = versionComparator.compare(version, "1.7.2");
                 int check_1_5_2 = versionComparator.compare(version, "1.5.2");
                 int check_1_3_2 = versionComparator.compare(version, "1.3.2");
@@ -308,6 +291,9 @@ public class Curse {
                         localFilePath = installPath + "/" + "forge-" + version + "-" + build + "-server.zip";
                 } else if (check_1_7_10 == 0) {
                         fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "-" + version + "/forge-" + version + "-" + build + "-" + version + "-installer.jar";
+                } else if (check_1_7_10_pre == 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "-prerelease/forge-" + version + "-" + build + "-prerelease-installer.jar";
+                        localFilePath = installPath + "/" + "forge-1.7.10-" + build + "-universal.zip";
                 } else if (check_1_7_2 == 0) {
                         fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "-mc172/forge-" + version + "-" + build + "-mc172-installer.jar";
                 }
@@ -375,7 +361,7 @@ public class Curse {
                                 }
                         }
                 } catch (Exception e) {
-                        ServerStarter.startupError = true;
+                        Config.startupError = true;
                         LogWarning( e.getMessage() );
                 }
 
@@ -393,9 +379,9 @@ public class Curse {
                                 final Process start;
 
                                 String javaStart = "java";
-                                if (ServerStarter.configProps.getProperty("java_path") != null && !ServerStarter.configProps.getProperty("java_path").equals("java")) {
-                                        javaStart = ServerStarter.configProps.getProperty("java_path");
-                                        LogDebug("Use for Installer Custom Java Path: " + ServerStarter.configProps.getProperty("java_path"));
+                                if (Config.configProps.getProperty("java_path") != null && !Config.configProps.getProperty("java_path").equals("java")) {
+                                        javaStart = Config.configProps.getProperty("java_path");
+                                        LogDebug("Use for Installer Custom Java Path: " + Config.configProps.getProperty("java_path"));
                                 }
 
                                 final Process installer = start = new ProcessBuilder(new String[]{ javaStart , "-jar", installerFile, "nogui", "--installServer"}).directory(new File(installPath)).start();
@@ -442,18 +428,18 @@ public class Curse {
 
                                 }else{
                                         LogWarning("Problem while installing FORGE, \"libraries\"-Folder not successfully created.");
-                                        startupError = true;
+                                        Config.startupError = true;
                                         return true;
                                 }
 
                         } catch (IOException | InterruptedException e) {
                                 LogWarning("Problem while installing Loader from " + installPath + File.separator + ' ' + e );
-                                startupError = true;
+                                Config.startupError = true;
                                 return true;
                         }
                 }else{
                         LogWarning("No \"libraries\"-Folders and no Installer-File could be found!");
-                        startupError = true;
+                        Config.startupError = true;
                         return true;
                 }
 

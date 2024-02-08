@@ -1,9 +1,15 @@
 package de.hellbz.forge.Utils;
 
-import de.hellbz.forge.ServerStarter;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -11,8 +17,6 @@ import java.util.Comparator;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
-
-import static de.hellbz.forge.ServerStarter.startupError;
 
 public class Data {
 
@@ -68,7 +72,7 @@ public class Data {
     }
 
     public static void LogDebug(final String message) {
-        if (Objects.equals(ServerStarter.configProps.getProperty("debug"), "true")) {
+        if (Objects.equals(Config.configProps.getProperty("debug"), "true")) {
             System.out.println(CurrentTime() + TXT_CYAN + "[F-S-S/DEBUG] " + TXT_RESET + message);
             try {
                 Data.doLog(CurrentTime() + "[F-S-S/DEBUG] " + cleanLog(message));
@@ -87,9 +91,9 @@ public class Data {
         }
     }
 
-    private static String CurrentTime() {
-        if (!ServerStarter.configProps.getProperty("timezone").equals("UTC")) {
-            ZoneId z = ZoneId.of(ServerStarter.configProps.getProperty("timezone"));
+    public static String CurrentTime() {
+        if (!Config.configProps.getProperty("timezone").equals("UTC")) {
+            ZoneId z = ZoneId.of(Config.configProps.getProperty("timezone"));
             return "[" + ZonedDateTime.now(z).format(DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT)) + "] ";
         } else {
             return "[" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT)) + "] ";
@@ -101,7 +105,7 @@ public class Data {
     }
 
     public static void doLog(final String message) throws IOException {
-        if (Objects.equals(ServerStarter.configProps.getProperty("log_to_file"), "true")) {
+        if (Objects.equals(Config.configProps.getProperty("log_to_file"), "true")) {
             FileWriter fileWriter = new FileWriter("logs/server-starter.log", true); //Set true for append mode
             PrintWriter printWriter = new PrintWriter(fileWriter);
             printWriter.println(message);  //New line
@@ -141,7 +145,7 @@ public class Data {
             // Now, check if this line contains our keyword. If it does, print the line
             if (line.toLowerCase().contains("xmx") || line.toLowerCase().contains("xms")) {
                 LogWarning("Illegal characters found in Server-Args ");
-                startupError = true;
+                Config.startupError = true;
             }
         }
     }
@@ -156,15 +160,38 @@ public class Data {
             int minLength = Math.min(parts1.length, parts2.length);
 
             for (int i = 0; i < minLength; i++) {
-                int num1 = Integer.parseInt(parts1[i]);
-                int num2 = Integer.parseInt(parts2[i]);
+                if (parts1[i].equals(parts2[i])) {
+                    continue; // Parts are equal, move to the next part
+                }
 
-                if (num1 != num2) {
+                if (parts1[i].matches("\\d+") && parts2[i].matches("\\d+")) {
+                    int num1 = Integer.parseInt(parts1[i]);
+                    int num2 = Integer.parseInt(parts2[i]);
+
                     return Integer.compare(num1, num2);
+                } else {
+                    return parts1[i].compareTo(parts2[i]);
                 }
             }
 
             return Integer.compare(parts1.length, parts2.length);
         }
+    }
+
+    static String getFromXML(String xmlContent, String versionTag) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new java.io.ByteArrayInputStream(xmlContent.getBytes()));
+
+            // Extrahieren des Inhalts des angegebenen Tags aus dem XML
+            NodeList nodeList = doc.getElementsByTagName(versionTag);
+            if (nodeList.getLength() > 0) {
+                return nodeList.item(0).getTextContent();
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to read content from XML: " + e.getMessage());
+        }
+        return null;
     }
 }

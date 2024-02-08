@@ -1,8 +1,9 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="Forge-Server-Starter:jar">
+  <artifact type="jar" build-on-make="true" name="Forge-Server-Starter:jar">
     <output-path>$PROJECT_DIR$/out/compiled</output-path>
     <root id="archive" name="minecraft_server.jar">
       <element id="module-output" name="Forge-Server-Starter" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/json-20230618.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

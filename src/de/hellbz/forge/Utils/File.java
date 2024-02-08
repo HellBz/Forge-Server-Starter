@@ -1,13 +1,13 @@
 package de.hellbz.forge.Utils;
 
-import de.hellbz.forge.ServerStarter;
-import de.hellbz.forge.Utils.Data;
-
 import java.io.*;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
-
-import static de.hellbz.forge.ServerStarter.startupError;
 
 public class File {
 
@@ -47,105 +47,129 @@ public class File {
     }
 
     public static void StartFile() throws IOException {
+        String fileName;
+        String command;
 
-        if (ServerStarter.OS.contains("win")) {
+        if (Config.OS.contains("win")) {
+            fileName = "start_server.bat";
+            command = "@echo off\njava -jar minecraft_server.jar -Xmx1024M -Xms1024M nogui\npause\n";
             Data.LogInfo("Creating Windows Start-File.");
-            PrintWriter StartFileWriter = new PrintWriter("start_server.bat", "UTF-8");
-            StartFileWriter.println("@echo off");
-            StartFileWriter.println("java -jar minecraft_server.jar -Xmx1024M -Xms1024M nogui");
-            StartFileWriter.println("pause");
-            StartFileWriter.close();
-
         } else {
+            fileName = "start_server.sh";
+            command = "java -jar minecraft_server.jar -Xmx1024M -Xms1024M nogui\n";
             Data.LogInfo("Creating UNIX Start-File.");
-            PrintWriter StartFileWriter = new PrintWriter("start_server.sh", "UTF-8");
-            StartFileWriter.println("java -jar minecraft_server.jar -Xmx1024M -Xms1024M nogui");
-            StartFileWriter.close();
+        }
+
+        try (PrintWriter startFileWriter = new PrintWriter(new FileWriter(fileName, false))) {
+            startFileWriter.println(command);
         }
     }
 
-    public static void ConfigFile() throws IOException {
 
-        java.io.File configFile = new java.io.File("server_starter.conf");
+    /* AI optimized https://chat.openai.com/share/de913bc3-3958-477d-aefd-0a5387bda14a */
+    public static void LogFile() {
+        if (Objects.equals(Config.configProps.getProperty("log_to_file"), "true")) {
 
-        if (configFile.exists()) {
+            String logFolder = "logs/";
 
-            FileReader configReader = new FileReader(configFile);
-            ServerStarter.configProps = new Properties();
-            ServerStarter.configProps.load(configReader);
+            // Create a File object for the log directory
+            java.io.File directory = new java.io.File( logFolder );
 
-            configReader.close();
-
-        } else {
-            if (configFile.createNewFile()) {
-
-                FileWriter writerConfig = new FileWriter(configFile);
-
-                ServerStarter.configProps = new Properties();
-                ServerStarter.configProps.setProperty("debug", "false");
-                ServerStarter.configProps.setProperty("log_to_file", "false");
-                ServerStarter.configProps.setProperty("timezone", "UTC");
-                ServerStarter.configProps.setProperty("java_path", "java");
-
-                ServerStarter.configProps.store(writerConfig, "Forge Server-Starter Configuration");
-
-                writerConfig.close();
-            }
-        }
-    }
-
-    public static void LogFile(){
-
-        if (Objects.equals( ServerStarter.configProps.getProperty("log_to_file"), "true")) {
-
-            java.io.File directory = new java.io.File("logs/");
-            if (!directory.exists()) {
-                directory.mkdir();
-                // If you require it to make the entire directory path including parents,
-                // use directory.mkdirs(); here instead.
+            if (!directory.exists() && !directory.mkdirs()) {
+                // Error creating the directory
+                return;
             }
 
-            if (directory.exists()) {
+            // Create a File object for the log file
+            java.io.File file = new java.io.File(logFolder + "server-starter.log");
 
-                java.io.File file = new java.io.File("logs/server-starter.log");
-
-                if (file.exists() && file.isFile()) {
-                    file.delete();
+            // Check if the file exists and is a regular file, then delete it
+            if (file.exists() && file.isFile()) {
+                if (!file.delete()) {
+                    // Error deleting the file
+                    return;
                 }
+            }
 
-                if (!file.exists()) {
-
-                    try {
-                        file.createNewFile();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+            // If the file doesn't exist, create it
+            if (!file.exists()) {
+                try {
+                    if (!file.createNewFile()) {
+                        // Error creating the file
                     }
+                } catch (IOException e) {
+                    // e.printStackTrace();
                 }
-
             }
         }
     }
 
-    public static boolean checkExist(String startup_file ) {
+    public static boolean checkExist(String startup_file) {
         // Get the startup-file
-        if( startup_file != null ) {
+        if (startup_file != null) {
             java.io.File check_file = new java.io.File(startup_file);
 
             // Check if the specified file
             // Exists or not
-            if ( !check_file.exists() ) {
+            if (!check_file.exists()) {
                 Data.LogWarning("Start-File cannot be Found. ");
-                startupError = true;
+                Config.startupError = true;
                 return false;
             } else {
                 //Data.LogInfo("Start-File Found. ");
-                startupError = false;
+                Config.startupError = false;
                 return true;
             }
         } else {
             Data.LogWarning("Start-File is empty!");
-            startupError = true;
+            Config.startupError = true;
             return false;
         }
+    }
+
+    /* https://chat.openai.com/share/cda966e3-ce50-4fe7-8e7d-7b4b86a63bd1 */
+    public static byte[] cacheFile(String remoteFileURL, String localFileURL, long cacheTimeMillis) throws IOException {
+        // Create a URL instance for the remote file.
+        URL remoteURL = new URL(remoteFileURL);
+
+        // Determine the file path for the local file.
+        Path localFilePath = Paths.get(localFileURL);
+
+        // Check if the local folder exists; create it if it doesn't.
+        Path parentDirectory = localFilePath.getParent();
+        if (parentDirectory != null && !Files.exists(parentDirectory)) {
+            Files.createDirectories(parentDirectory);
+        }
+
+        // Check if the local file exists and if it is valid within the cache time.
+        if (Files.exists(localFilePath)) {
+            long lastModifiedTime = Files.getLastModifiedTime(localFilePath).toMillis();
+            long currentTime = new Date().getTime();
+            if (currentTime - lastModifiedTime < cacheTimeMillis) {
+                // The local file is valid, no need to download it again.
+                return Files.readAllBytes(localFilePath);
+            }
+        }
+
+        // Try to download the remote file.
+        byte[] fileContent = null;
+        try (InputStream in = remoteURL.openStream()) {
+            fileContent = new byte[in.available()];
+            in.read(fileContent);
+        } catch (IOException e) {
+            // If there's an error during download, read the existing local file.
+            if (Files.exists(localFilePath)) {
+                return Files.readAllBytes(localFilePath);
+            } else {
+                throw e;
+            }
+        }
+
+        // If download was successful, save the remote file locally.
+        try (OutputStream out = Files.newOutputStream(localFilePath)) {
+            out.write(fileContent);
+        }
+
+        return fileContent;
     }
 }
