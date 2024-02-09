@@ -56,7 +56,8 @@ public class ServerStarter {
 
         LogDebug("-----------------------------------------------");
 
-        if ( isReallyHeadless() ) {
+        // if ( isReallyHeadless() ) {
+        if ( true ) {
             //Headless, all Fine
             LogDebug("This is Headless Client");
 

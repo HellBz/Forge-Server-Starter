@@ -1,15 +1,16 @@
 package de.hellbz.forge.Utils;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 import java.awt.*;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -17,6 +18,7 @@ import java.util.Comparator;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
+
 
 public class Data {
 
@@ -154,6 +156,15 @@ public class Data {
     public static class VersionComparator implements Comparator<String> {
         @Override
         public int compare(String v1, String v2) {
+
+            if (v1 == null && v2 == null) {
+                return 0; // Both null, consider them equal
+            } else if (v1 == null) {
+                return -1; // v1 is null, consider it less than v2
+            } else if (v2 == null) {
+                return 1; // v2 is null, consider it greater than v1
+            }
+
             String[] parts1 = v1.split("\\.");
             String[] parts2 = v2.split("\\.");
 
@@ -178,20 +189,29 @@ public class Data {
         }
     }
 
-    static String getFromXML(String xmlContent, String versionTag) {
+
+    static String getFromXML(String xmlContent, String xpathExpression) {
+
+        if ( xmlContent == null || xmlContent.trim().isEmpty() || !xmlContent.contains("<") || !xmlContent.contains(">") ) {
+            return null; // null oder "" für einen leeren String
+        }
+
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(new java.io.ByteArrayInputStream(xmlContent.getBytes()));
+            Document doc = builder.parse(new InputSource(new StringReader(xmlContent)));
 
-            // Extrahieren des Inhalts des angegebenen Tags aus dem XML
-            NodeList nodeList = doc.getElementsByTagName(versionTag);
-            if (nodeList.getLength() > 0) {
-                return nodeList.item(0).getTextContent();
-            }
+            XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPath xpath = xpathFactory.newXPath();
+            XPathExpression expr = xpath.compile(xpathExpression);
+
+            // Anpassung, um direkte Tags oder Pfade zu unterstützen
+            String result = (String) expr.evaluate(doc, XPathConstants.STRING);
+            return result;
         } catch (Exception e) {
-            System.out.println("Failed to read content from XML: " + e.getMessage());
+            //System.out.println("Failed to read content from XML: " + e.getMessage());
         }
         return null;
     }
+
 }

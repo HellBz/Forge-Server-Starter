@@ -62,50 +62,48 @@ public class Remote {
         // Prüfen, ob es sich um eine URL oder einen lokalen Pfad handelt
         boolean isUrl = source.toLowerCase().startsWith("http://") || source.toLowerCase().startsWith("https://");
 
-        // Wenn destinationPath gesetzt ist und es sich um eine URL handelt, versuchen Sie, die Datei herunterzuladen
-        if (destinationPath != null && !destinationPath.isEmpty() && isUrl) {
-            try (InputStream in = new URL(source).openStream()) {
+        try (InputStream in = isUrl ? new URL(source).openStream() : Remote.class.getResourceAsStream(source) != null ? Remote.class.getResourceAsStream(source) : new FileInputStream(source)) {
+            if (destinationPath != null && !destinationPath.isEmpty()) {
+                // Wenn ein Ziel angegeben ist, versuche, die Datei zu speichern
                 Files.copy(in, Paths.get(destinationPath), StandardCopyOption.REPLACE_EXISTING);
-                System.out.println("File downloaded successfully.");
+                Data.LogDebug("File saved. (" + source + ") to (" + destinationPath + ")");
                 return true;
-            } catch (Exception e) {
-                System.out.println("Download failed: " + e.getMessage());
-                return false;
-            }
-        } else {
-            // Andernfalls versuchen Sie, die Datei lokal zu lesen
-            StringBuilder content = new StringBuilder();
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(source), StandardCharsets.UTF_8))) {
+            } else {
+                // Andernfalls versuche, die Datei zu lesen und den Inhalt zurückzugeben
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+                StringBuilder content = new StringBuilder();
                 String line;
-                while ((line = in.readLine()) != null) {
+                while ((line = reader.readLine()) != null) {
                     content.append(line).append("\n");
                 }
-                System.out.println("File content:");
-                System.out.println(content);
+                Data.LogDebug("File read (" + source + ")");
                 return content.toString();
-            } catch (Exception e) {
-                System.out.println("Reading failed: " + e.getMessage());
-                return null;
             }
+        } catch (Exception e) {
+            Data.LogWarning("File-Operation failed: " + e.getMessage() + "(" + source + ")");
+            return destinationPath != null ? false : "";
         }
     }
 
     public static void checkForUpdate() {
 
-        String localVersionPath = "jar:/res/version.xml"; // Lokaler Pfad zur XML-Datei im Ressourcenordner
+        String localVersionPath = "/res/version.xml"; // Lokaler Pfad zur XML-Datei im Ressourcenordner
         String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/master/res/version.xml"; // Remote-URL zur XML-Datei auf GitHub
 
-        String localVersion = Data.getFromXML( (String) downloadOrReadFile(localVersionPath) ,"version");
-        String remoteVersion = Data.getFromXML( (String) downloadOrReadFile(remoteVersionUrl) ,"version");
+        String localVersion = Data.getFromXML( (String) downloadOrReadFile(localVersionPath) ,"application/version");
+        String remoteVersion = Data.getFromXML( (String) downloadOrReadFile(remoteVersionUrl) ,"application/version");
 
-        if ( remoteVersion != null && isConnected ) {
+        if ( ( remoteVersion != null || localVersion != null )  && isConnected ) {
+
+            //System.out.println("Local version: " + localVersion);
+            //System.out.println("Remote version: " + remoteVersion);
+
             // Vergleich der Versionen mit der benutzerdefinierten Vergleichsfunktion
             Data.VersionComparator versionComparator = new Data.VersionComparator();
-            if (versionComparator.compare(localVersion, remoteVersion) < 0) {
-                System.out.println("A new version is available: " + remoteVersion);
-                // Weitere Aktionen für das Update...
+            if ( versionComparator.compare(localVersion, remoteVersion) < 0 ) {
+                Data.LogInfo( "A new version is available: " + remoteVersion + ", Your local Version is. " + localVersion );
             } else {
-                System.out.println("You have the latest version.");
+                Data.LogInfo( "You have the latest version of: " + remoteVersion );
             }
         }
     }
