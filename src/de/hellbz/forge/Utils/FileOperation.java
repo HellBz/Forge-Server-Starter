@@ -40,7 +40,7 @@ public class FileOperation {
         // Lokale Datei speichern und lesen
         FileOperationResult result2 = downloadOrReadFile("local_file.txt", "destination_path.txt");
         System.out.println("Lokaler Dateiinhalt (gespeichert): " + (String) result2.getContent());
-        System.out.println("Datei erfolgreich gespeichert: " + (boolean) result2.getAdditionalData());
+
 
         // Remote-Datei lesen
         FileOperationResult result3 = downloadOrReadFile("https://example.com/remote_file.txt");
@@ -49,10 +49,11 @@ public class FileOperation {
             System.out.println("Remote-Dateiinhalt: " + remoteContent);
         } else {
             System.out.println("Fehler beim Lesen der Remote-Datei. Response-Code: " + result3.getResponseCode());
+            System.out.println("Datei erfolgreich gespeichert: " + result3.getAdditionalData());
         }
 
         // Remote-Datei speichern und lesen
-        FileOperationResult result4 = downloadOrReadFile("https://example.com/remote_file.txt", "destination_path.txt");
+        FileOperationResult result4 = downloadOrReadFile("https://hellbz.de", "destination_path.txt");
         if (result4.getResponseCode() == 200) {
             String remoteContent = (String) result4.getContent();
             System.out.println("Remote-Dateiinhalt (gespeichert): " + remoteContent);

@@ -99,13 +99,13 @@ public class ServerStarter {
         //Try Auto-Installer
         if ( !libraries_dir.exists() && !Config.startupError  ) {
             LogInfo("Check for Auto-Installation-File ...");
-            Forge.downloadLoader( currentPath );
+            Loader.downloadLoader( currentPath );
         }
 
         //Try to use Installer-File
         if ( !libraries_dir.exists() && !Config.startupError ) {
             LogInfo("Check for Forge-Installation-File ...");
-            Forge.installLoader( currentPath );
+            Loader.installLoader( currentPath );
         }
 
         if ( libraries_dir.exists() && !Config.startupError ) {
