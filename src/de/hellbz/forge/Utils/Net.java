@@ -21,7 +21,7 @@ public class Net {
     }
 
     public Net() {
-        this.isConnected = false;
+        isConnected = false;
     }
 
     public static void checkInternetConnection() {

@@ -36,6 +36,10 @@ public class ServerStarter {
         //WELCOME
         LogInfo("Checking System ...");
 
+        //System.out.println( NeoForge.getVersions().toString() );
+
+        //System.out.println( Forge.getVersions().toString() );
+
         //Get System-Variables like xmx and xms
         RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
         List<String> arguments = runtimeMxBean.getInputArguments();
@@ -57,7 +61,7 @@ public class ServerStarter {
         LogDebug("-----------------------------------------------");
 
         // if ( isReallyHeadless() ) {
-        if ( true ) {
+        if ( isReallyHeadless() ) {
             //Headless, all Fine
             LogDebug("This is Headless Client");
 
@@ -95,13 +99,13 @@ public class ServerStarter {
         //Try Auto-Installer
         if ( !libraries_dir.exists() && !Config.startupError  ) {
             LogInfo("Check for Auto-Installation-File ...");
-            Curse.downloadLoader( currentPath );
+            Forge.downloadLoader( currentPath );
         }
 
         //Try to use Installer-File
         if ( !libraries_dir.exists() && !Config.startupError ) {
             LogInfo("Check for Forge-Installation-File ...");
-            Curse.installLoader( currentPath );
+            Forge.installLoader( currentPath );
         }
 
         if ( libraries_dir.exists() && !Config.startupError ) {

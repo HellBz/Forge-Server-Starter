@@ -1,6 +1,6 @@
 package de.hellbz.forge.Utils;
 
-import org.json.JSONException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -12,21 +12,64 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static de.hellbz.forge.Utils.Data.*;
 
-public class Curse {
+public class Forge {
 
-        public static JSONObject parseJson(String jsonString) {
-                try {
-                        return new JSONObject(jsonString);
-                } catch (JSONException e) {
-                        e.printStackTrace();
+        public static Map<String, Map<String, Object>> getVersions() {
+                String forgeJsonUrl = "https://files.minecraftforge.net/net/minecraftforge/forge/promotions_slim.json";
+
+                FileOperationResult getVersionJSON = FileOperation.downloadOrReadFile(forgeJsonUrl);
+                if (getVersionJSON.getResponseCode() == 200) {
+
+                        String jsonString = (String) getVersionJSON.getContent();
+
+                        if (jsonString != null) {
+                                try {
+                                        Map<String, Map<String, Object>> forgeVersions = new TreeMap<>(Collections.reverseOrder(new VersionComparator()));
+
+                                        JSONObject jsonObject = new JSONObject(jsonString);
+                                        JSONObject promosObject = jsonObject.getJSONObject("promos");
+
+                                        Iterator<String> keys = promosObject.keys();
+                                        while (keys.hasNext()) {
+                                                String key = keys.next();
+                                                String mcVersion = key.replace("-latest", "").replace("-recommended", "");
+                                                String forgeVersion = promosObject.getString(key);
+
+                                                Map<String, Object> versionInfo = forgeVersions.getOrDefault(mcVersion, new HashMap<>());
+                                                versionInfo.put("versions", versionInfo.getOrDefault("versions", new JSONArray()));
+                                                ((JSONArray) versionInfo.get("versions")).put(forgeVersion);
+
+                                                if (key.endsWith("-recommended")) {
+                                                        versionInfo.put("recommended", forgeVersion);
+                                                } else {
+                                                        versionInfo.put("latest", forgeVersion);
+                                                }
+
+                                                forgeVersions.put(mcVersion, versionInfo);
+                                        }
+
+                                        return forgeVersions;
+
+                                } catch (Exception e) {
+                                        LogError("Invalid JSON format.");
+                                        e.printStackTrace();
+                                        return null;
+                                        }
+                        } else {
+                                LogError("Failed to load JSON.");
+                                return null;
+                        }
+
+                } else {
+                        LogError("Fehler beim Lesen der Remote-Datei. Response-Code: " + getVersionJSON.getResponseCode());
                         return null;
                 }
         }
-        public static Map<String, String> getVersions(String mode) {
+
+        public static Map<String, String> getOldVersions(String mode) {
                 boolean isConnected = Net.isConnected;
                 Map<String, String> promoMap = null;
 
@@ -139,10 +182,25 @@ public class Curse {
 
                 File autoConfigFile = new File("forge-auto-install.txt");
 
-                Map<String, String> ForgeLatestVersions = Curse.getVersions("-latest");
-                // LogInfo( ForgeLatestVersions.toString() );
-                Map.Entry<String, String> firstEntry = ForgeLatestVersions.entrySet().iterator().next();
+                // get the new versions map
+                Map<String, Map<String, Object>> forgeVersions = Forge.getVersions();
 
+                // get the first version key
+                String firstForgeVersionKey = forgeVersions.keySet().iterator().next();
+
+                // get the information for the first version
+                Map<String, Object> firstForgeVersionInfo = forgeVersions.get(firstForgeVersionKey);
+
+                // get the new NEO versions map
+                Map<String, Map<String, Object>> neoVersions = NeoForge.getVersions();
+
+                // get the first version key
+                String firstNeoVersionKey = neoVersions.keySet().iterator().next();
+
+                // get the information for the first version
+                Map<String, Object> firstNeoVersionInfo = neoVersions.get(firstNeoVersionKey);
+
+                //LogInfo( firstEntry.toString() );
                 if ( autoFile && autoConfigFile.exists() ) {
 
                         // Search MC-Version and Forge in Auto-Installer-File
@@ -160,9 +218,9 @@ public class Curse {
                                 FileWriter writerConfig = new FileWriter(autoConfigFile);
                                 Config.autoProps = new Properties();
                                 Config.autoProps.setProperty("mc-version", "latest" /* firstEntry.getKey() */ );
-                                Config.autoProps.setProperty("mc-version-info", "like " + firstEntry.getKey() + " or latest" /* firstEntry.getValue() */ );
+                                Config.autoProps.setProperty("mc-version-info", "like " + ( firstForgeVersionKey != null ? firstForgeVersionKey : "" ) + " or latest" /* firstEntry.getValue() */ );
                                 Config.autoProps.setProperty("forge-version", "latest" /* firstEntry.getValue() */ );
-                                Config.autoProps.setProperty("forge-version-info", "like " + firstEntry.getValue() + " , recommended or latest" /* firstEntry.getValue() */ );
+                                Config.autoProps.setProperty("forge-version-info", "like " + ( firstForgeVersionInfo != null ? (String) firstForgeVersionInfo.get("recommended") : "" ) + " , recommended or latest" /* firstEntry.getValue() */ );
                                 Config.autoProps.store(writerConfig, "Forge Auto-Install Configuration");
                                 LogWarning("Found Error in the \"forge-auto-install.txt\", saved the File correct, please check the File.");
                                 Config.startupError = true;
@@ -175,34 +233,37 @@ public class Curse {
 
                         if (mcVersion.matches(regexmcVersion)) {
                                 if (mcVersion.equals("latest")) {
-                                        mcVersion = firstEntry.getKey();
+                                        mcVersion = ( firstForgeVersionKey != null ? firstForgeVersionKey : "" );
                                 }
                         } else {
-                                LogWarning("The Minecraft-Version \"" + mcVersion + "\" does not expect like [\"" + firstEntry.getKey() + "\"or\"latest\"");
+                                LogWarning("The Minecraft-Version \"" + mcVersion + "\" does not expect like [\"" + ( firstForgeVersionKey != null ? firstForgeVersionKey : "" ) + "\"or\"latest\"");
                                 Config.startupError = true;
                                 return false;
                         }
                         if (mcVersion.matches(regexmcVersion)) {
-                                if ( forgeVersion.equals("latest")) {
-                                        if ( ForgeLatestVersions.containsKey( mcVersion ) )  {
-                                                forgeVersion = ForgeLatestVersions.get( mcVersion );
+
+                                if ( forgeVersions.containsKey( mcVersion ) )  {
+                                        Map<String, Object> versionInfo = forgeVersions.get( mcVersion );
+                                        if( versionInfo != null ){
+                                                if ( forgeVersion.equals("latest") && versionInfo.get("latest") != null ){
+                                                        forgeVersion = (String) versionInfo.get("latest");
+                                                }else if ( forgeVersion.equals("recommended") && versionInfo.get("recommended") != null ){
+                                                        forgeVersion = (String) versionInfo.get("recommended");
+                                                }else{
+                                                        LogWarning("The Minecraft-Version \"" + mcVersion + "\" does not exist in the Latest or Recommended-Version-List.");
+                                                        Config.startupError = true;
+                                                        return false;
+                                                }
                                         }else{
-                                                LogWarning("The Minecraft-Version \"" + mcVersion + "\" does not exist in the Latest-Version-List.");
+                                                LogWarning("The Minecraft-Version \"" + mcVersion + "\" does not exist in the Version-List.");
                                                 Config.startupError = true;
                                                 return false;
                                         }
-                                } else if ( forgeVersion.equals("recommended") ) {
-                                        Map<String, String> ForgeRecommendedVersions = Curse.getVersions("-recommended");
-                                        if ( ForgeRecommendedVersions.containsKey( mcVersion ) )  {
-                                                forgeVersion = ForgeRecommendedVersions.get( mcVersion );
-                                        } else {
-                                                LogWarning("The FORGE-Version \"" + forgeVersion + "\" does not exist in the Recommended-Version-List.");
-                                                Config.startupError = true;
-                                                return false;
-                                        }
+
                                 }
+
                         } else {
-                                LogWarning("The FORGE-Version \"" + forgeVersion + "\" does not expect like [\"" + firstEntry.getValue() + "\",\"recommended\"or\"latest\"");
+                                LogWarning("The FORGE-Version \"" + forgeVersion + "\" does not expect like [\"" + ( firstForgeVersionInfo != null ? (String) firstForgeVersionInfo.get("latest") : "" )  + "\",\"recommended\"or\"latest\"");
                                 Config.startupError = true;
                                 return false;
                         }
@@ -220,13 +281,20 @@ public class Curse {
 
                         //LogInfo( ForgeLatestVersions.toString() );
 
-                        String ForgeVersionsAsString = ForgeLatestVersions.keySet().stream().collect(Collectors.joining(", "));
+                        // join all keys
+                        String ForgeVersionsAsString = String.join(", ", forgeVersions.keySet());
                         LogInfo( ForgeVersionsAsString );
+
+
+                        LogInfo("NeoFORGED is available in the following Versions:");
+                        String NeoForgeVersionsAsString = String.join(", ", neoVersions.keySet() );
+
+                        LogInfo( NeoForgeVersionsAsString );
 
                         // Using Scanner for Getting Input from User
                         Scanner in = new Scanner(System.in);
 
-                        LogInfo("Wich MINECRAFT-Version you like to install [ eg. " + firstEntry.getKey() + " ]:");
+                        LogInfo("Wich MINECRAFT-Version you like to install [ eg. " + ( firstForgeVersionKey != null ? firstForgeVersionKey : "" ) + " ]:");
                         String mcVersionInput = in.nextLine();
 
                         StringBuilder mcVersionFiltered = new StringBuilder();
@@ -242,28 +310,43 @@ public class Curse {
 
                         mcVersion = String.valueOf(mcVersionInput);
 
-                        if ( !ForgeLatestVersions.containsKey(mcVersion) ) {
+                        if ( forgeVersions.containsKey(mcVersion) ) {
+                                LogInfo("Wich FORGE-Version you like to install [ Latest:  " + ( firstForgeVersionInfo != null ? (String) firstForgeVersionInfo.get("latest") : "" ) + ", Recommended:  " + ( firstForgeVersionInfo != null ? (String) firstForgeVersionInfo.get("recommended") : "" ) + " ]:");
+                                LogInfo("You can also install all other Versions, listed on this Site: https://files.minecraftforge.net/net/minecraftforge/forge/index_" + mcVersion + ".html");
+                        }
+                        if ( neoVersions.containsKey(mcVersion) ) {
+                                LogInfo("Wich NeoFORGED-Version you like to install [ Latest:  " + ( firstNeoVersionInfo != null ? (String) firstNeoVersionInfo.get("latest") : "" ) + " ]:");
+                                LogInfo("You can also install all other Versions, listed on this Site: https://projects.neoforged.net/neoforged/neoforge");
+                        }
+
+                        if ( !forgeVersions.containsKey(mcVersion) && !neoVersions.containsKey(mcVersion) )
+                        {
                                 // Der Schlüssel existiert in der Map nicht
                                 LogError("The Minecraft-Version \"" + mcVersion + "\" not exists, restart Downloader.");
                                 downloadLoader( installPath );
+                                return false;
                         }
 
-                        Map<String, String> ForgeRecommendedVersions = Curse.getVersions("-recommended");
-                        LogInfo("Wich FORGE-Version you like to install [ Latest:  " + ForgeLatestVersions.get( mcVersion) + ", Recommended:  " + ForgeRecommendedVersions.get( mcVersion) + " ]:");
-                        LogInfo("You can also install all other Versions, listed on this Site: https://files.minecraftforge.net/net/minecraftforge/forge/index_" + mcVersion + ".html");
                         String forgeVersionInput = in.nextLine();
+                        forgeVersion = String.valueOf(forgeVersionInput);
 
-                        StringBuilder forgeVersionFiltered = new StringBuilder();
+                        // Regulären Ausdruck erstellen
+                        Pattern pattern = Pattern.compile(forgeVersionInput);
 
-                        // Überprüfen und nur Zahlen und Punkte akzeptieren
-                        /*for (char c : forgeVersionInput.toCharArray()) {
-                                if (Character.isDigit(c) || c == '.') {
-                                        forgeVersionFiltered.append(c);
-                                }
+                        // Suche im String nach Übereinstimmungen mit dem Muster
+                        Matcher matcher = pattern.matcher(neoVersions.toString());
+                        if( matcher.find() ) {
+                                System.out.println("Eintrag gefunden: " + matcher.group());
                         }
+
+                        // Durchsuchen der Ergebnisse mit Streams
+                        /*
+                        neoVersions.entrySet().stream()
+                                .flatMap(entry -> ((List<String>) entry.getValue().getOrDefault("versions", new ArrayList<>())).stream())
+                                .filter(version -> pattern.matcher(version).matches())
+                                .forEach(match -> System.out.println("Eintrag gefunden: " + match));
                         */
 
-                        forgeVersion = String.valueOf(forgeVersionInput);
 
                 }
 
@@ -322,7 +405,7 @@ public class Curse {
                                 }
                         }
 
-                        LogForge("File downloaded successfully: " + localFilePath);
+                        LogCustom("File downloaded successfully: " + localFilePath,"FORGE-Installer",TXT_PURPLE);
                         return true;
                 } catch (IOException e) {
                         LogError("Fehler beim Download: " + e.getMessage());
@@ -388,7 +471,7 @@ public class Curse {
                                 final Scanner serverLog = new Scanner(start.getInputStream());
                                while (serverLog.hasNextLine()) {
                                         final String println = serverLog.nextLine();
-                                        LogForge(println);
+                                        LogCustom(println,"FORGE-Installer",TXT_PURPLE);
                                 }
                                 installer.waitFor();
                                 //Installer is done
