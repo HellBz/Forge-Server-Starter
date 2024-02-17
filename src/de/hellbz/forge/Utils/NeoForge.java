@@ -9,6 +9,14 @@ import static de.hellbz.forge.Utils.Data.LogError;
 
 public class NeoForge {
 
+    // https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge
+    // https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml
+    // https://maven.neoforged.net/#/releases/net/neoforged/neoforge
+    // https://maven.neoforged.net/api/maven/details/releases/net/neoforged/neoforge
+    // https://maven.neoforged.net/api/maven/details/releases/net/neoforged/neoforge/20.4.159-beta
+    // https://maven.neoforged.net/releases/net/neoforged/neoforge/20.4.159-beta/neoforge-20.4.159-beta-installer.jar
+    // https://maven.neoforged.net/api/maven/details/releases/net/neoforged/neoforge/20.4.159-beta/neoforge-20.4.159-beta-installer.jar
+
     public static Map<String, Map<String, Object>>  getVersions() {
         String neoJsonUrl = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge";
 
@@ -67,5 +75,21 @@ public class NeoForge {
             LogError("Fehler beim Lesen der Remote-Datei. Response-Code: " + getVersionJSON.getResponseCode());
             return null;
         }
+    }
+
+    public static Map<String, String> getFileLinks( String build ) {
+        String fileURL;
+        String localFilePath;
+
+
+        fileURL = "https://maven.neoforged.net/releases/net/neoforged/neoforge/" + build + "/neoforge-" + build + "-installer.jar";
+        localFilePath = "/" + "neoforge-" + build + "-installer.jar";
+
+
+        Map<String, String> links = new HashMap<>();
+        links.put("fileURL", fileURL);
+        links.put("localFilePath", localFilePath);
+
+        return links;
     }
 }

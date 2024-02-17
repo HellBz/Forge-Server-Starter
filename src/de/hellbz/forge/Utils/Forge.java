@@ -66,6 +66,44 @@ public class Forge {
                 }
         }
 
+        public static Map<String, String> getFileLinks(String version, String build) {
+                String fileURL;
+                String localFilePath;
+
+                Comparator<String> versionComparator = new VersionComparator();
+                int check_1_7_10 = versionComparator.compare(version, "1.7.10");
+                int check_1_7_10_pre = versionComparator.compare(version, "1.7.10_pre4");
+                int check_1_7_2 = versionComparator.compare(version, "1.7.2");
+                int check_1_5_2 = versionComparator.compare(version, "1.5.2");
+                int check_1_3_2 = versionComparator.compare(version, "1.3.2");
+
+                if (check_1_5_2 < 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "/forge-" + version + "-" + build + "-universal.zip";
+                        localFilePath = "/" + "forge-" + version + "-" + build + "-universal.zip";
+                } else if (check_1_3_2 < 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "/forge-" + version + "-" + build + "-server.zip";
+                        localFilePath = "/" + "forge-" + version + "-" + build + "-server.zip";
+                } else if (check_1_7_10 == 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "-" + version + "/forge-" + version + "-" + build + "-" + version + "-installer.jar";
+                        localFilePath = "/" + "forge-" + version + "-" + build + "-installer.jar";
+                } else if (check_1_7_10_pre == 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "-prerelease/forge-" + version + "-" + build + "-prerelease-installer.jar";
+                        localFilePath = "/" + "forge-1.7.10-" + build + "-universal.zip";
+                } else if (check_1_7_2 == 0) {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "-mc172/forge-" + version + "-" + build + "-mc172-installer.jar";
+                        localFilePath = "/" + "forge-" + version + "-" + build + "-installer.jar";
+                } else {
+                        fileURL = "https://maven.minecraftforge.net/net/minecraftforge/forge/" + version + "-" + build + "/forge-" + version + "-" + build + "-installer.jar";
+                        localFilePath = "/" + "forge-" + version + "-" + build + "-installer.jar";
+                }
+
+                Map<String, String> links = new HashMap<>();
+                links.put("fileURL", fileURL);
+                links.put("localFilePath", localFilePath);
+
+                return links;
+        }
+
         public static Map<String, String> getOldVersions(String mode) {
                 boolean isConnected = Net.isConnected;
                 Map<String, String> promoMap = null;

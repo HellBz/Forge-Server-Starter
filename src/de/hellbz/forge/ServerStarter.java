@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static de.hellbz.forge.Utils.Data.*;
 
@@ -60,7 +58,6 @@ public class ServerStarter {
 
         LogDebug("-----------------------------------------------");
 
-        // if ( isReallyHeadless() ) {
         if ( isReallyHeadless() ) {
             //Headless, all Fine
             LogDebug("This is Headless Client");
@@ -80,14 +77,6 @@ public class ServerStarter {
             }
         }
 
-        //Set Library-Path's
-        java.io.File forge_dir = new java.io.File("libraries/net/minecraftforge/forge/");
-        java.io.File libraries_dir = new java.io.File("libraries/");
-        java.io.File root_dir = new java.io.File("./");
-
-        //Start-File
-        String startup_file = null;
-
         //No Internet Connection, only manually installation
         if ( !Net.isConnected ) {
             LogInfo("Place your Forge-Installer-JAR directly next to the current JAR.");
@@ -97,103 +86,28 @@ public class ServerStarter {
         }
 
         //Try Auto-Installer
-        if ( !libraries_dir.exists() && !Config.startupError  ) {
+        if (!Config.librariesFolder.exists() && !Config.startupError && !Loader.checkLocalInstaller() ) {
             LogInfo("Check for Auto-Installation-File ...");
-            Loader.downloadLoader( currentPath );
+            Loader.downloadLoader();
         }
 
         //Try to use Installer-File
-        if ( !libraries_dir.exists() && !Config.startupError ) {
-            LogInfo("Check for Forge-Installation-File ...");
-            Loader.installLoader( currentPath );
+        if ( !Config.librariesFolder.exists() && !Config.startupError && Loader.checkLocalInstaller() ) {
+            LogInfo("Check for Loader-Installation-File ...");
+            Loader.installLoader();
         }
 
-        if ( libraries_dir.exists() && !Config.startupError ) {
-
-            if ( forge_dir.exists()  ) {
-                //Search for new Forge Folder
-
-                Pattern pattern = Pattern.compile("([.0-9]+)-([.0-9]+)", Pattern.CASE_INSENSITIVE);
-
-                //List all Folders
-                java.io.File[] forge_files = forge_dir.listFiles();
-
-                // try-catch block to handle exceptions
-                try {
-                    // Display the names of the files
-                    for ( java.io.File forge_file : forge_files) {
-
-                        Matcher matcher = pattern.matcher(forge_file.getName());
-                        //LogInfo( forge_files[i].getName() );
-
-                        if (matcher.find()) {
-                            Config.mc_version = matcher.group(1);
-                            Config.forge_version = matcher.group(2);
-                            Config.mcVersionDetail = Config.mc_version.split("\\.");
-                            if (Integer.parseInt(Config.mcVersionDetail[1]) >= 17) {
-                                if (Config.OS.contains("win")) {
-                                    LogDebug("Using WINDOWS System-Parameter");
-                                    startup_file = "libraries/net/minecraftforge/forge/" + Config.mc_version + "-" + Config.forge_version + "/win_args.txt";
-                                } else {
-                                    LogDebug("Using UNIX System-Parameter");
-                                    startup_file = "libraries/net/minecraftforge/forge/" + Config.mc_version + "-" + Config.forge_version + "/unix_args.txt";
-                                }
-
-                                LogInfo("Found Minecraft: " + Config.mc_version + " with new Forge " + Config.forge_version);
-
-                                break;
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    Config.startupError = true;
-                    LogWarning( e.getMessage() );
-                }
-
-            }
-
-            if( !forge_dir.exists() || Integer.parseInt(Config.mcVersionDetail[1]) < 17 ){
-
-                Pattern pattern = Pattern.compile("forge-([.0-9]+)-([.0-9]+)([universal.jar|.jar]+)", Pattern.CASE_INSENSITIVE);
-
-                //List all Folders
-                java.io.File[] root_files = root_dir.listFiles();
-
-                // try-catch block to handle exceptions
-                try {
-                    // Display the names of the files
-                    for (int i = 0; i < root_files.length; i++) {
-
-                        Matcher matcher = pattern.matcher(root_files[i].getName());
-
-                        // LogInfo( root_files[i].getName() );
-
-                        if ( matcher.find() ) {
-                            Config.mc_version = matcher.group(1);
-                            Config.forge_version = matcher.group(2);
-                            startup_file = root_files[i].getName();
-                            LogInfo("Found Minecraft: " + Config.mc_version  + " with Forge " + Config.forge_version );
-                            break;
-                        }
-                    }
-                } catch (Exception e) {
-                    Config.startupError = true;
-                    LogWarning( e.getMessage() );
-                }
-            }
-
-            if ( Config.mc_version == null && Config.forge_version == null ) {
-                LogWarning("No Forge-Version could be Found!");
-                Config.startupError = true;
-            }
-
+        if ( Config.librariesFolder.exists() && !Config.startupError ) {
+            //Try to find loader in Libraries and Forge Folders
+            Loader.checkLoaderFolder();
+            Loader.checkLocalFolder();
         }
 
         if ( !Config.startupError ) {
 
-            if (File.checkExist(startup_file)) {
+            if (File.checkExist(Config.startup_file)) {
 
-                checkContent(startup_file);
+                checkContent(Config.startup_file);
 
                 LogInfo("Building Startup-Parameter ...");
 
@@ -214,7 +128,7 @@ public class ServerStarter {
                 }
 
                 if (Integer.parseInt(Config.mcVersionDetail[1]) >= 17) {
-                    where.add("@" + startup_file);
+                    where.add("@" + Config.startup_file);
 
                     if (Config.javaVersion < 60) {
                         LogWarning("The Java-Class-Version is with \"" + Config.javaVersion.toString() + "\" to low, to start the Server!");
@@ -223,7 +137,7 @@ public class ServerStarter {
 
                 } else {
                     where.add("-jar");
-                    where.add(startup_file);
+                    where.add(Config.startup_file);
                 }
 
                 where.add("nogui");
@@ -232,7 +146,7 @@ public class ServerStarter {
                 where.toArray(Config.CMD_ARRAY);
             } else {
                 //Config.startupError = true;
-                LogWarning("The Start-File \"" + startup_file + "\" does not exist!");
+                LogWarning("The Start-File \"" + Config.startup_file + "\" does not exist!");
             }
         }
 
@@ -247,7 +161,7 @@ public class ServerStarter {
                 LogInfo("More timezones in this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones ");
                 LogInfo("Setup your own timezone in server_starter.conf");
                 LogInfo("");
-                LogInfo("Start FORGE " + Config.forge_version + " Server");
+                LogInfo("Start " + ( Config.isForge ? "Forge": "NeoForge" ) + " " + Config.loader_version + " Server");
                 LogInfo("-----------------------------------------------");
 
                 //DEBUG StartUp Commands
