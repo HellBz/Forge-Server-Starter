@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
 
-public class File {
+public class Document {
 
     public static void Eula() throws IOException {
 
@@ -46,34 +46,21 @@ public class File {
         }
     }
 
-    public static void StartFile() throws IOException {
-        String fileName;
-        String command;
+    public static void StartFile() {
 
-        if (Config.OS.contains("win")) {
-            fileName = "start_server.bat";
-            command = "@echo off\njava -jar minecraft_server.jar -Xmx1024M -Xms1024M nogui\npause\n";
-            Data.LogInfo("Creating Windows Start-File.");
-        } else {
-            fileName = "start_server.sh";
-            command = "java -jar minecraft_server.jar -Xmx1024M -Xms1024M nogui\n";
-            Data.LogInfo("Creating UNIX Start-File.");
-        }
-
-        try (PrintWriter startFileWriter = new PrintWriter(new FileWriter(fileName, false))) {
-            startFileWriter.println(command);
-        }
+        Data.LogInfo("Creating " + (Config.OS.contains("win") ? "WINDOWS" : "UNIX") + "  Start-File.");
+        FileOperation.downloadOrReadFile("/res/start_server." + (Config.OS.contains("win") ? "bat" : "sh")  , Config.rootFolder + File.separator  + "start_server." + (Config.OS.contains("win") ? "bat" : "sh") );
+        FileOperation.downloadOrReadFile("/res/generate_auto_installation_file." + (Config.OS.contains("win") ? "bat" : "sh")  , Config.rootFolder + File.separator  + "generate_auto_installation_file." + (Config.OS.contains("win") ? "bat" : "sh") );
     }
-
 
     /* AI optimized https://chat.openai.com/share/de913bc3-3958-477d-aefd-0a5387bda14a */
     public static void LogFile() {
         if (Objects.equals(Config.configProps.getProperty("log_to_file"), "true")) {
 
-            String logFolder = "logs/";
+            String logFolder = "logs" + File.separator;
 
             // Create a File object for the log directory
-            java.io.File directory = new java.io.File( logFolder );
+            java.io.File directory = new java.io.File(logFolder);
 
             if (!directory.exists() && !directory.mkdirs()) {
                 // Error creating the directory
@@ -128,6 +115,7 @@ public class File {
     }
 
     /* https://chat.openai.com/share/cda966e3-ce50-4fe7-8e7d-7b4b86a63bd1 */
+    //Right now unused
     public static byte[] cacheFile(String remoteFileURL, String localFileURL, long cacheTimeMillis) throws IOException {
         // Create a URL instance for the remote file.
         URL remoteURL = new URL(remoteFileURL);

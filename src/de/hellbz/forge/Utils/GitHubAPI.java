@@ -23,7 +23,7 @@ public class GitHubAPI {
         return sendRequest(endpoint, array_get, null);
     }
 
-    public static String sendRequest(String endpoint,String array_get, String path) {
+    public static String sendRequest(String endpoint, String array_get, String path) {
 
         // Erstelle die URL zur GitHub-API
         StringBuilder apiUrlBuilder = new StringBuilder("https://api.github.com/");
@@ -37,8 +37,8 @@ public class GitHubAPI {
 
         if (endpoint == null || endpoint.isEmpty()) {
             return "Ungültiger Endpunkt";
-        }else{
-            apiUrlBuilder.append( endpoint );
+        } else {
+            apiUrlBuilder.append(endpoint);
         }
 
         if (path != null && !path.isEmpty()) {
@@ -48,11 +48,11 @@ public class GitHubAPI {
         String apiUrl = apiUrlBuilder.toString();
 
         // Andernfalls versuche, den Inhalt herunterzuladen oder zu lesen,
-        FileOperationResult fileOperationResult = FileOperation.downloadOrReadFile(apiUrl);
+        FileOperation fileOperationResult = FileOperation.downloadOrReadFile(apiUrl);
         if (fileOperationResult.getResponseCode() == 200) {
             if (array_get != null && !array_get.isEmpty()) {
-                return Data.getJsonValue( (String) fileOperationResult.getContent(), "0/commit/committer/date");
-            }else{
+                return Data.getJsonValue((String) fileOperationResult.getContent(), "0/commit/committer/date");
+            } else {
                 return (String) fileOperationResult.getContent();
             }
 

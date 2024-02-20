@@ -36,9 +36,9 @@ public class Google {
             for (Path path : stream) {
                 if (!Files.isDirectory(path)) {
 
-                    System.out.println( path.getFileName().toString() );
+                    System.out.println(path.getFileName().toString());
 
-                    Matcher matcher = pattern.matcher( path.getFileName().toString() );
+                    Matcher matcher = pattern.matcher(path.getFileName().toString());
 
                     if (matcher.find()) {
                         // ...then you can use group() methods.
@@ -59,8 +59,8 @@ public class Google {
         URL url;
         try {
 
-            String decodedUrl = new String( Base64.getDecoder().decode("aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vZm9ybXMvZC9lLzFGQUlwUUxTZEVUenpfQVptZ2gwUkt1dHJJOXFXNFFSSTljMndISGxqQVNXdXJvemlXUEtOVlN3L2Zvcm1SZXNwb25zZQ=="));
-            url = new URL( decodedUrl );
+            String decodedUrl = new String(Base64.getDecoder().decode("aHR0cHM6Ly9kb2NzLmdvb2dsZS5jb20vZm9ybXMvZC9lLzFGQUlwUUxTZEVUenpfQVptZ2gwUkt1dHJJOXFXNFFSSTljMndISGxqQVNXdXJvemlXUEtOVlN3L2Zvcm1SZXNwb25zZQ=="));
+            url = new URL(decodedUrl);
 
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
@@ -75,7 +75,7 @@ public class Google {
         // entry.638475810=12:20
         HttpURLConnection http;
         try {
-            http = (HttpURLConnection)url.openConnection();
+            http = (HttpURLConnection) url.openConnection();
 
             http.setRequestMethod("POST");
             http.setDoOutput(true);
@@ -100,7 +100,7 @@ public class Google {
             // data.append("&entry.638475810=" + String.format("%02d", now.getHour() ) + ":" + String.format("%02d", now.getMinute() )  );
             data.append("&entry.1253727540=ModpackStats");
 
-            System.out.println( "data.toString(): " + data );
+            System.out.println("data.toString(): " + data);
 
             byte[] out = data.toString().getBytes(StandardCharsets.UTF_8);
 

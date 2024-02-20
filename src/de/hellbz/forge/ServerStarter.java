@@ -3,6 +3,7 @@ package de.hellbz.forge;
 import de.hellbz.forge.Utils.*;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -11,9 +12,6 @@ import java.util.*;
 import static de.hellbz.forge.Utils.Data.*;
 
 public class ServerStarter {
-
-
-
 
     static {
 
@@ -25,14 +23,24 @@ public class ServerStarter {
         LogInfo("-----------------------------------------------");
 
     }
+
     public static void main(String[] args) throws IOException, InterruptedException {
 
         // Google.LogToGForm();
+        Document.LogFile();
 
-        File.LogFile();
+        if (Arrays.toString(args).toLowerCase().contains("-autofile") ) {
+            FileOperation.downloadOrReadFile("/res/forge-auto-install.txt" , Config.rootFolder + File.separator + "forge-auto-install.txt" );
+            LogWarning("Auto Installation-File successfully created.");
+            LogError("EXIT FORGE-Server-Starter ");
+            LogError("-----------------------------------------------");
+            System.exit(-1);
+        }
 
         //WELCOME
         LogInfo("Checking System ...");
+
+        // FileOperation.downloadOrReadFile("/res/version.xml" , Config.rootFolder + File.separator + "version.xml" );
 
         //System.out.println( NeoForge.getVersions().toString() );
 
@@ -47,7 +55,7 @@ public class ServerStarter {
         properties.forEach((k, v) -> LogDebug(k + ":" + v));
 
         //DEBUG
-        String joinedStartupParameter = Arrays.toString( Config.startupParameter );
+        String joinedStartupParameter = Arrays.toString(Config.startupParameter);
         LogDebug("STARTUP-PARAMETER " + TXT_CYAN + joinedStartupParameter + TXT_RESET);
 
         String joinedStartupArgs = Arrays.toString(args);
@@ -58,54 +66,56 @@ public class ServerStarter {
 
         LogDebug("-----------------------------------------------");
 
-        if ( isReallyHeadless() ) {
+        if (isReallyHeadless()) {
             //Headless, all Fine
             LogDebug("This is Headless Client");
 
         } else {
 
             LogDebug(Arrays.toString(args));
-            if (Arrays.toString(args).toLowerCase().contains("-xmx") || Arrays.toString(args).toLowerCase().contains("-xms") || Arrays.toString(Config.startupParameter).toLowerCase().contains("-xmx") || Arrays.toString( Config.startupParameter ).toLowerCase().contains("-xms")) {
+            if (Arrays.toString(args).toLowerCase().contains("-xmx") || Arrays.toString(args).toLowerCase().contains("-xms") || Arrays.toString(Config.startupParameter).toLowerCase().contains("-xmx") || Arrays.toString(Config.startupParameter).toLowerCase().contains("-xms")) {
                 LogDebug("SCRIPT USE -Xmx and -Xms for Start.");
             } else {
                 // Config.startupError = true;
                 LogWarning("PLS use -Xmx and -Xms for start up this script.");
                 JFrame jFrame = new JFrame();
                 JOptionPane.showMessageDialog(jFrame, "Script only work in Batch-Mode!\nStartfile for Batch-Mode is created.");
-                File.StartFile();
+                Document.StartFile();
                 // System.exit(0);
             }
         }
 
         //No Internet Connection, only manually installation
-        if ( !Net.isConnected ) {
+        if (!Net.isConnected) {
             LogInfo("Place your Forge-Installer-JAR directly next to the current JAR.");
             Config.startupError = true;
-        }else {
+        } else {
             Remote.checkForUpdate();
         }
 
         //Try Auto-Installer
         if (!Config.librariesFolder.exists() && !Config.startupError && !Loader.checkLocalInstaller() ) {
-            LogInfo("Check for Auto-Installation-File ...");
-            Loader.downloadLoader();
+            //checking Minecraft Version and download, if installer-File not already exist or if error occurs
+            if ( Loader.checkLoaderVersion() ) {
+                Loader.downloadLoader();
+            }
         }
 
         //Try to use Installer-File
-        if ( !Config.librariesFolder.exists() && !Config.startupError && Loader.checkLocalInstaller() ) {
+        if (!Config.librariesFolder.exists() && !Config.startupError && Loader.checkLocalInstaller(true) ) {
             LogInfo("Check for Loader-Installation-File ...");
             Loader.installLoader();
         }
 
-        if ( Config.librariesFolder.exists() && !Config.startupError ) {
+        if (Config.librariesFolder.exists() && !Config.startupError) {
             //Try to find loader in Libraries and Forge Folders
             Loader.checkLoaderFolder();
             Loader.checkLocalFolder();
         }
 
-        if ( !Config.startupError ) {
+        if (!Config.startupError) {
 
-            if (File.checkExist(Config.startup_file)) {
+            if (Document.checkExist(Config.startup_file)) {
 
                 checkContent(Config.startup_file);
 
@@ -121,7 +131,7 @@ public class ServerStarter {
                     LogDebug("Use Standard Java Path");
                 }
 
-                Collections.addAll(where, Config.startupParameter );
+                Collections.addAll(where, Config.startupParameter);
 
                 if (Config.configProps.getProperty("timezone") != null) {
                     where.add("-Duser.timezone=" + Config.configProps.getProperty("timezone"));
@@ -131,7 +141,7 @@ public class ServerStarter {
                     where.add("@" + Config.startup_file);
 
                     if (Config.javaVersion < 60) {
-                        LogWarning("The Java-Class-Version is with \"" + Config.javaVersion.toString() + "\" to low, to start the Server!");
+                        LogWarning("The Java-Class-Version is with \"" + Config.javaVersion + "\" to low, to start the Server!");
                         Config.startupError = true;
                     }
 
@@ -150,18 +160,20 @@ public class ServerStarter {
             }
         }
 
-            //Check Eula-File
-        if ( !Config.startupError ) { File.Eula(); }
+        //Check Eula-File
+        if (!Config.startupError) {
+            Document.Eula();
+        }
 
-        if ( !Config.startupError ) {
+        if (!Config.startupError) {
 
-            if ( Config.CMD_ARRAY != null ) {
+            if (Config.CMD_ARRAY != null) {
                 LogInfo("");
                 LogInfo("Server is Running in TimeZone: " + Config.configProps.getProperty("timezone"));
                 LogInfo("More timezones in this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones ");
                 LogInfo("Setup your own timezone in server_starter.conf");
                 LogInfo("");
-                LogInfo("Start " + ( Config.isForge ? "Forge": "NeoForge" ) + " " + Config.loader_version + " Server");
+                LogInfo("Start " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion + " Server");
                 LogInfo("-----------------------------------------------");
 
                 //DEBUG StartUp Commands
@@ -188,7 +200,7 @@ public class ServerStarter {
             }
         }
 
-        if ( Config.startupError ) {
+        if (Config.startupError) {
 
             LogError("EXIT FORGE-Server-Starter ");
             LogError("-----------------------------------------------");

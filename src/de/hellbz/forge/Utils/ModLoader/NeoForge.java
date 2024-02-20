@@ -1,5 +1,7 @@
-package de.hellbz.forge.Utils;
+package de.hellbz.forge.Utils.ModLoader;
 
+import de.hellbz.forge.Utils.Data;
+import de.hellbz.forge.Utils.FileOperation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -17,10 +19,10 @@ public class NeoForge {
     // https://maven.neoforged.net/releases/net/neoforged/neoforge/20.4.159-beta/neoforge-20.4.159-beta-installer.jar
     // https://maven.neoforged.net/api/maven/details/releases/net/neoforged/neoforge/20.4.159-beta/neoforge-20.4.159-beta-installer.jar
 
-    public static Map<String, Map<String, Object>>  getVersions() {
+    public static Map<String, Map<String, Object>> getVersions() {
         String neoJsonUrl = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge";
 
-        FileOperationResult getVersionJSON = FileOperation.downloadOrReadFile(neoJsonUrl);
+        FileOperation getVersionJSON = FileOperation.downloadOrReadFile(neoJsonUrl);
         if (getVersionJSON.getResponseCode() == 200) {
             String jsonString = (String) getVersionJSON.getContent();
             if (jsonString != null) {
@@ -52,7 +54,7 @@ public class NeoForge {
                         versionInfo.put("versions", versionsList);
 
                         if (!NeoVersions.containsKey("1." + mcVersion) ||
-                                versionComparator.compare(version, (String) NeoVersions.get("1." + mcVersion).get("latest") ) > 0) {
+                                versionComparator.compare(version, (String) NeoVersions.get("1." + mcVersion).get("latest")) > 0) {
                             //NeoVersions.put("1." + mcVersion, neoVersion);
                             versionInfo.put("latest", version);
                             //System.out.println("Debug: Highest Neo-Version for " + mcVersion + ": " + neoVersion);
@@ -77,7 +79,7 @@ public class NeoForge {
         }
     }
 
-    public static Map<String, String> getFileLinks( String build ) {
+    public static Map<String, String> getFileLinks(String build) {
         String fileURL;
         String localFilePath;
 

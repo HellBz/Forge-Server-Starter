@@ -14,7 +14,7 @@ public class Net {
     static {
 
         checkInternetConnection();
-        if( isConnected )
+        if (isConnected)
             LogInfo("Checking Internet... Connected to the Web.");
         else
             LogWarning("Checking Internet-Connection... Connection Failed.");

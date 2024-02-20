@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.Scanner;
 
 
-
 public class Data {
 
     // Define Text Colors
@@ -119,7 +118,6 @@ public class Data {
     public static final String CYAN_BACKGROUND_BRIGHT = "\033[0;106m";  // CYAN
     public static final String WHITE_BACKGROUND_BRIGHT = "\033[0;107m";   // WHITE
 
-
     public static void LogInfo(final String message) {
 
         System.out.println(CurrentTime() + TXT_GREEN + "[F-S-S/INFO] " + TXT_RESET + message);
@@ -205,7 +203,7 @@ public class Data {
         }
     }
 
-    public static void checkContent(String startup_file ) {
+    public static void checkContent(String startup_file) {
         // Get the startup-file
         java.io.File check_file = new java.io.File(startup_file);
 
@@ -229,51 +227,9 @@ public class Data {
         }
     }
 
-    // Benutzerdefinierte Vergleichsfunktion für Versionsnummern
-    public static class VersionComparator implements Comparator<String> {
-        @Override
-        public int compare(String v1, String v2) {
-
-            if (v1 == null && v2 == null) {
-                return 0; // Both null, consider them equal
-            } else if (v1 == null) {
-                return -1; // v1 is null, consider it less than v2
-            } else if (v2 == null) {
-                return 1; // v2 is null, consider it greater than v1
-            }
-
-            // Keep only digits and dots
-            String sanitizedV1 = v1.replaceAll("[^\\d.]", "");
-            String sanitizedV2 = v2.replaceAll("[^\\d.]", "");
-
-            String[] parts1 = sanitizedV1.split("\\.");
-            String[] parts2 = sanitizedV2.split("\\.");
-
-            int minLength = Math.min(parts1.length, parts2.length);
-
-            for (int i = 0; i < minLength; i++) {
-                if (parts1[i].equals(parts2[i])) {
-                    continue; // Parts are equal, move to the next part
-                }
-
-                if (parts1[i].matches("\\d+") && parts2[i].matches("\\d+")) {
-                    int num1 = Integer.parseInt(parts1[i]);
-                    int num2 = Integer.parseInt(parts2[i]);
-
-                    return Integer.compare(num1, num2);
-                } else {
-                    return parts1[i].compareTo(parts2[i]);
-                }
-            }
-
-            return Integer.compare(parts1.length, parts2.length);
-        }
-    }
-
-
     static String getFromXML(String xmlContent, String xpathExpression) {
 
-        if ( xmlContent == null || xmlContent.trim().isEmpty() || !xmlContent.contains("<") || !xmlContent.contains(">") ) {
+        if (xmlContent == null || xmlContent.trim().isEmpty() || !xmlContent.contains("<") || !xmlContent.contains(">")) {
             return null; // null oder "" für einen leeren String
         }
 
@@ -287,13 +243,13 @@ public class Data {
             XPathExpression expr = xpath.compile(xpathExpression);
 
             // Anpassung, um direkte Tags oder Pfade zu unterstützen
-            String result = (String) expr.evaluate(doc, XPathConstants.STRING);
-            return result;
+            return (String) expr.evaluate(doc, XPathConstants.STRING);
         } catch (Exception e) {
             System.out.println("Failed to read content from XML: " + e.getMessage());
             return null;
         }
     }
+
     public static String getJsonValue(String json, String path) {
         try {
             // Überprüfen, ob das JSON-String mit "[" beginnt (Array)
@@ -341,5 +297,45 @@ public class Data {
         }
 
         return currentObject.optString(parts[parts.length - 1]);
+    }
+
+    public static class VersionComparator implements Comparator<String> {
+        @Override
+        public int compare(String v1, String v2) {
+
+            if (v1 == null && v2 == null) {
+                return 0; // Both null, consider them equal
+            } else if (v1 == null) {
+                return -1; // v1 is null, consider it less than v2
+            } else if (v2 == null) {
+                return 1; // v2 is null, consider it greater than v1
+            }
+
+            // Keep only digits and dots
+            String sanitizedV1 = v1.replaceAll("[^\\d.]", "");
+            String sanitizedV2 = v2.replaceAll("[^\\d.]", "");
+
+            String[] parts1 = sanitizedV1.split("\\.");
+            String[] parts2 = sanitizedV2.split("\\.");
+
+            int minLength = Math.min(parts1.length, parts2.length);
+
+            for (int i = 0; i < minLength; i++) {
+                if (parts1[i].equals(parts2[i])) {
+                    continue; // Parts are equal, move to the next part
+                }
+
+                if (parts1[i].matches("\\d+") && parts2[i].matches("\\d+")) {
+                    int num1 = Integer.parseInt(parts1[i]);
+                    int num2 = Integer.parseInt(parts2[i]);
+
+                    return Integer.compare(num1, num2);
+                } else {
+                    return parts1[i].compareTo(parts2[i]);
+                }
+            }
+
+            return Integer.compare(parts1.length, parts2.length);
+        }
     }
 }
