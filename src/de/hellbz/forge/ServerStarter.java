@@ -14,7 +14,7 @@ import static de.hellbz.forge.Utils.Data.*;
 public class ServerStarter {
 
     static {
-
+        Document.LogFile();
         LogInfo("-----------------------------------------------");
         LogInfo("FORGE-Server-Starter");
         LogInfo("Now support MinecraftForge and NeoForged");
@@ -28,7 +28,6 @@ public class ServerStarter {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         // Google.LogToGForm();
-        Document.LogFile();
 
         if (Arrays.toString(args).toLowerCase().contains("-autofile") ) {
             FileOperation.downloadOrReadFile("/res/forge-auto-install.txt" , Config.rootFolder + File.separator + "forge-auto-install.txt" );
@@ -52,16 +51,17 @@ public class ServerStarter {
 
         Properties properties = System.getProperties();
         properties.forEach((k, v) -> LogDebug(k + ":" + v));
+        LogDebug("server_starter.conf: " + Config.configProps.toString());
 
         //DEBUG
         String joinedStartupParameter = Arrays.toString(Config.startupParameter);
-        LogDebug("STARTUP-PARAMETER " + TXT_CYAN + joinedStartupParameter + TXT_RESET);
+        LogDebug("STARTUP-PARAMETER: " + TXT_CYAN + joinedStartupParameter + TXT_RESET);
 
         String joinedStartupArgs = Arrays.toString(args);
-        LogDebug("STARTUP-ARGS " + TXT_CYAN + joinedStartupArgs + TXT_RESET);
+        LogDebug("STARTUP-ARGS: " + TXT_CYAN + joinedStartupArgs + TXT_RESET);
 
         String currentPath = new java.io.File(".").getCanonicalPath();
-        LogDebug("DIRECTORY " + TXT_CYAN + currentPath + TXT_RESET);
+        LogDebug("DIRECTORY: " + TXT_CYAN + currentPath + TXT_RESET);
 
         LogDebug("-----------------------------------------------");
 

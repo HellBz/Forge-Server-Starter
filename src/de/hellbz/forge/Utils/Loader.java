@@ -70,11 +70,11 @@ public class Loader {
             Config.autoProps.load(autoReader);
             autoReader.close();
 
-            minecraftVersion = Config.autoProps.getProperty("minecraftVersion");
+            Config.minecraftVersion = Config.autoProps.getProperty("minecraftVersion");
             loaderType = Config.autoProps.getProperty("loaderType");
-            loaderVersion = Config.autoProps.getProperty("loaderVersion");
+            Config.loaderVersion = Config.autoProps.getProperty("loaderVersion");
 
-            if (minecraftVersion == null || minecraftVersion.trim().isEmpty() || loaderType == null || loaderType.trim().isEmpty() || loaderVersion == null || loaderVersion.trim().isEmpty() ) {
+            if (Config.minecraftVersion == null || Config.minecraftVersion.trim().isEmpty() || loaderType == null || loaderType.trim().isEmpty() || loaderVersion == null || loaderVersion.trim().isEmpty() ) {
 
                 FileOperation.downloadOrReadFile("/res/forge-auto-install.txt" , Config.rootFolder + File.separator + "forge-auto-install.txt" );
                 LogWarning("Found Error in the \"forge-auto-install.txt\", saved the File correct, please check the File.");
@@ -164,29 +164,29 @@ public class Loader {
                         }
             */
 
-            minecraftVersion = String.valueOf(mcVersionInput);
+            Config.minecraftVersion = String.valueOf(mcVersionInput);
 
-            if (forgeVersions.containsKey(minecraftVersion)) {
-                LogInfo("Wich FORGE-Version you like to install [ Latest:  " + (forgeVersions.containsKey(minecraftVersion) ? (String) forgeVersions.get(minecraftVersion).get("latest") : "") + ", Recommended:  " + (forgeVersions.containsKey(minecraftVersion) ? (String) forgeVersions.get(minecraftVersion).get("recommended") : "") + " ]:");
+            if (forgeVersions.containsKey(Config.minecraftVersion)) {
+                LogInfo("Wich FORGE-Version you like to install [ Latest:  " + (forgeVersions.containsKey(Config.minecraftVersion) ? (String) forgeVersions.get(Config.minecraftVersion).get("latest") : "") + ", Recommended:  " + (forgeVersions.containsKey(Config.minecraftVersion) ? (String) forgeVersions.get(Config.minecraftVersion).get("recommended") : "") + " ]:");
                 LogInfo("You can also install all other Versions, listed on this Site: https://files.minecraftforge.net/net/minecraftforge/forge/index_" + minecraftVersion + ".html");
             }
-            if (neoVersions.containsKey(minecraftVersion)) {
-                LogInfo("Wich NeoFORGED-Version you like to install [ Latest:  " + (neoVersions.containsKey(minecraftVersion) ? (String) neoVersions.get(minecraftVersion).get("latest") : "") + " ]:");
+            if (neoVersions.containsKey(Config.minecraftVersion)) {
+                LogInfo("Wich NeoFORGED-Version you like to install [ Latest:  " + (neoVersions.containsKey(Config.minecraftVersion) ? (String) neoVersions.get(Config.minecraftVersion).get("latest") : "") + " ]:");
                 LogInfo("You can also install all other Versions, listed on this Site: https://projects.neoforged.net/neoforged/neoforge");
             }
 
-            if (!forgeVersions.containsKey(minecraftVersion) && !neoVersions.containsKey(minecraftVersion)) {
+            if (!forgeVersions.containsKey(Config.minecraftVersion) && !neoVersions.containsKey(Config.minecraftVersion)) {
                 // Der Schlüssel existiert in der Map nicht
-                LogError("The Minecraft-Version \"" + minecraftVersion + "\" not exists, restart Downloader.");
+                LogError("The Minecraft-Version \"" + Config.minecraftVersion + "\" not exists, restart Downloader.");
                 checkLoaderVersion();
                 return false;
             }
 
             String LoaderVersionInput = in.nextLine();
-            loaderVersion = String.valueOf(LoaderVersionInput);
+            Config.loaderVersion = String.valueOf(LoaderVersionInput);
 
             // Regulären Ausdruck erstellen
-            Pattern pattern = Pattern.compile(loaderVersion);
+            Pattern pattern = Pattern.compile(Config.loaderVersion);
 
             // Suche im String nach Übereinstimmungen mit dem Muster
             Matcher neoMatcher = pattern.matcher(neoVersions.toString());

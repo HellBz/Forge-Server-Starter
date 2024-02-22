@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
-import static de.hellbz.forge.Utils.Data.LogDebug;
-
 public class Config {
 
     public static final String OS = System.getProperty("os.name").toLowerCase();
@@ -42,7 +40,6 @@ public class Config {
             throw new RuntimeException(e);
         }
 
-        LogDebug(Config.configProps.toString());
         //Set local Timezone
         if (!Config.configProps.getProperty("timezone").equals("UTC")) {
             System.setProperty("user.timezone", Config.configProps.getProperty("timezone"));
@@ -55,16 +52,14 @@ public class Config {
 
         java.io.File configFile = new java.io.File("server_starter.conf");
 
-        if (configFile.exists()) {
+        if ( !configFile.exists()) {
+            FileOperation.downloadOrReadFile("/res/server_starter.conf", Config.rootFolder + File.separator + "server_starter.conf");
+        }
 
             FileReader configReader = new FileReader(configFile);
             Config.configProps = new Properties();
             Config.configProps.load(configReader);
             configReader.close();
-
-        } else {
-            FileOperation.downloadOrReadFile("/res/server_starter.conf" , Config.rootFolder + File.separator + "server_starter.conf" );
-        }
     }
 
 }
