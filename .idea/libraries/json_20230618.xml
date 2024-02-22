@@ -2,6 +2,7 @@
   <library name="json-20230618">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/libs/json-20230618.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/jsoup-1.17.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

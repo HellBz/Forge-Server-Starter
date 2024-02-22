@@ -11,5 +11,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="json-20230618" level="project" />
+    <orderEntry type="library" name="jsoup-1.17.2" level="project" />
   </component>
 </module>

@@ -1,4 +1,7 @@
-package de.hellbz.forge.Utils;
+package de.hellbz.forge.Utils.NotInUse;
+
+import de.hellbz.forge.Utils.Data;
+import de.hellbz.forge.Utils.FileOperation;
 
 public class GitHubAPI {
 

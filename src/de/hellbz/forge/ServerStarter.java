@@ -17,6 +17,7 @@ public class ServerStarter {
 
         LogInfo("-----------------------------------------------");
         LogInfo("FORGE-Server-Starter");
+        LogInfo("Now support MinecraftForge and NeoForged");
         LogInfo("");
         LogInfo("By " + TXT_GREEN + "HellBz" + TXT_RESET + ".de");
         LogInfo("");
@@ -39,8 +40,6 @@ public class ServerStarter {
 
         //WELCOME
         LogInfo("Checking System ...");
-
-        // FileOperation.downloadOrReadFile("/res/version.xml" , Config.rootFolder + File.separator + "version.xml" );
 
         //System.out.println( NeoForge.getVersions().toString() );
 
@@ -115,17 +114,17 @@ public class ServerStarter {
 
         if (!Config.startupError) {
 
-            if (Document.checkExist(Config.startup_file)) {
-
-                checkContent(Config.startup_file);
-
+            if (Document.checkExist(Config.startupFile)) {
+                checkContent(Config.startupFile);
                 LogInfo("Building Startup-Parameter ...");
 
                 List<String> where = new ArrayList<>();
+                String javaPath = Config.configProps.getProperty("java_path");
+                String timezone = Config.configProps.getProperty("timezone");
 
-                if (Config.configProps.getProperty("java_path") != null && !Config.configProps.getProperty("java_path").equals("java")) {
-                    where.add(Config.configProps.getProperty("java_path"));
-                    LogDebug("Use Custom Java Path: " + Config.configProps.getProperty("java_path"));
+                if (javaPath != null && !javaPath.equals("java")) {
+                    where.add(javaPath);
+                    LogDebug("Use Custom Java Path: " + javaPath);
                 } else {
                     where.add("java");
                     LogDebug("Use Standard Java Path");
@@ -133,21 +132,24 @@ public class ServerStarter {
 
                 Collections.addAll(where, Config.startupParameter);
 
-                if (Config.configProps.getProperty("timezone") != null) {
-                    where.add("-Duser.timezone=" + Config.configProps.getProperty("timezone"));
+                if (timezone != null) {
+                    where.add("-Duser.timezone=" + timezone);
                 }
 
-                if (Integer.parseInt(Config.mcVersionDetail[1]) >= 17) {
-                    where.add("@" + Config.startup_file);
+                Comparator<String> versionComparator = new VersionComparator();
+
+                LogDebug( Config.startupFile.toString() );
+
+                if (Config.startupFile.endsWith(".jar")) {
+                    where.add("-jar");
+                    where.add(Config.startupFile);
+                } else {
+                    where.add("@" + Config.startupFile);
 
                     if (Config.javaVersion < 60) {
-                        LogWarning("The Java-Class-Version is with \"" + Config.javaVersion + "\" to low, to start the Server!");
+                        LogWarning("The Java-Class-Version is with \"" + Config.javaVersion + "\" too low to start the Server!");
                         Config.startupError = true;
                     }
-
-                } else {
-                    where.add("-jar");
-                    where.add(Config.startup_file);
                 }
 
                 where.add("nogui");
@@ -156,7 +158,7 @@ public class ServerStarter {
                 where.toArray(Config.CMD_ARRAY);
             } else {
                 //Config.startupError = true;
-                LogWarning("The Start-File \"" + Config.startup_file + "\" does not exist!");
+                LogWarning("The Start-File \"" + Config.startupFile + "\" does not exist!");
             }
         }
 
@@ -170,7 +172,6 @@ public class ServerStarter {
             if (Config.CMD_ARRAY != null) {
                 LogInfo("");
                 LogInfo("Server is Running in TimeZone: " + Config.configProps.getProperty("timezone"));
-                LogInfo("More timezones in this list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones ");
                 LogInfo("Setup your own timezone in server_starter.conf");
                 LogInfo("");
                 LogInfo("Start " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion + " Server");

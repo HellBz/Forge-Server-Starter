@@ -4,6 +4,7 @@
     <root id="archive" name="minecraft_server.jar">
       <element id="module-output" name="Forge-Server-Starter" />
       <element id="extracted-dir" path="$PROJECT_DIR$/libs/json-20230618.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/jsoup-1.17.2.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

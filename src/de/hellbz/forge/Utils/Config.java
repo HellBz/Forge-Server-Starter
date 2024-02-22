@@ -1,7 +1,7 @@
 package de.hellbz.forge.Utils;
 
+import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -25,12 +25,11 @@ public class Config {
     public static boolean isForge = false;
     public static String minecraftVersion = null;
     public static String loaderVersion = null;
-    public static String[] mcVersionDetail = {"0", "0", "0"};
     public static String[] CMD_ARRAY = null;
     public static Integer javaVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));
     public static String[] startupParameter = null;
 
-    public static String startup_file = null;
+    public static String startupFile = null;
 
     public static String installerFile = null;
 
@@ -51,21 +50,7 @@ public class Config {
 
     }
 
-    public static void setMinecraftVersion(String version) {
-        minecraftVersion = version;
-        updateMCVersionDetail(minecraftVersion);
-    }
 
-    public static void updateMCVersionDetail(String version) {
-        if (version != null) {
-            String[] parts = version.split("\\.");
-            for (int i = 0; i < 3; i++) {
-                mcVersionDetail[i] = (i < parts.length) ? parts[i] : "0";
-            }
-        } else {
-            mcVersionDetail = new String[]{"0", "0", "0"};
-        }
-    }
     public static void initServerConfig() throws IOException {
 
         java.io.File configFile = new java.io.File("server_starter.conf");
@@ -78,20 +63,7 @@ public class Config {
             configReader.close();
 
         } else {
-            if (configFile.createNewFile()) {
-
-                FileWriter writerConfig = new FileWriter(configFile);
-
-                Config.configProps = new Properties();
-                Config.configProps.setProperty("debug", "false");
-                Config.configProps.setProperty("log_to_file", "false");
-                Config.configProps.setProperty("timezone", "UTC");
-                Config.configProps.setProperty("java_path", "java");
-
-                Config.configProps.store(writerConfig, "Forge Server-Starter Configuration");
-
-                writerConfig.close();
-            }
+            FileOperation.downloadOrReadFile("/res/server_starter.conf" , Config.rootFolder + File.separator + "server_starter.conf" );
         }
     }
 

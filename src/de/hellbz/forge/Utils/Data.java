@@ -245,7 +245,7 @@ public class Data {
             // Anpassung, um direkte Tags oder Pfade zu unterstützen
             return (String) expr.evaluate(doc, XPathConstants.STRING);
         } catch (Exception e) {
-            System.out.println("Failed to read content from XML: " + e.getMessage());
+            Data.LogError("Failed to read content from XML: " + e.getMessage());
             return null;
         }
     }
@@ -290,6 +290,7 @@ public class Data {
         JSONObject currentObject = jsonArray.getJSONObject(index);
 
         for (int i = 1; i < parts.length - 1; i++) {
+
             if (!currentObject.has(parts[i])) {
                 return null; // Pfad existiert nicht im JSON
             }

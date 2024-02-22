@@ -105,8 +105,8 @@ public class Loader {
             if ( loaderType.equalsIgnoreCase("forge") ){
                 Config.isForge = true;
                 if ( minecraftVersion.equalsIgnoreCase("latest") ) {
-                    Config.setMinecraftVersion( firstForgeVersionKey );
-                } else Config.setMinecraftVersion( minecraftVersion );
+                    Config.minecraftVersion = firstForgeVersionKey;
+                } else Config.minecraftVersion = minecraftVersion;
 
                 if ( forgeVersions.containsKey(Config.minecraftVersion) && loaderVersion.equalsIgnoreCase("latest") ){
                     Config.loaderVersion = forgeVersions.get(Config.minecraftVersion).get("latest").toString();
@@ -117,8 +117,8 @@ public class Loader {
             }else if ( loaderType.equalsIgnoreCase("neoforge") ){
                 Config.isForge = false;
                 if ( minecraftVersion.equalsIgnoreCase("latest") ){
-                    Config.setMinecraftVersion( firstNeoVersionKey );
-                } else Config.setMinecraftVersion( minecraftVersion );
+                    Config.minecraftVersion = firstNeoVersionKey;
+                } else Config.minecraftVersion = minecraftVersion;
 
                 if ( neoVersions.containsKey(Config.minecraftVersion) && loaderVersion.equalsIgnoreCase("latest") ){
                     Config.loaderVersion = neoVersions.get(Config.minecraftVersion).get("latest").toString();
@@ -260,14 +260,14 @@ public class Loader {
                 Matcher matcherNeoForge = Config.Pattern_NeoForge.matcher(currentFiles[i].getName());
 
                 if (matcherForge.find()) {
-                    Config.setMinecraftVersion( matcherForge.group(1));
+                    Config.minecraftVersion =  matcherForge.group(1);
                     Config.loaderVersion = matcherForge.group(2);
                     Config.installerFile = currentFiles[i].getName();
                     if(output) LogInfo("Match found INSTALLER with MC-Version " + Config.minecraftVersion + " and Forge " + Config.loaderVersion);
                     return true;
                 }
                 if (matcherNeoForge.find()) {
-                    Config.setMinecraftVersion( "1." + matcherNeoForge.group(1) );
+                    Config.minecraftVersion = "1." + matcherNeoForge.group(1);
                     Config.loaderVersion = matcherNeoForge.group(1);
                     Config.installerFile = currentFiles[i].getName();
                     if(output) LogInfo("Match found INSTALLER with MC-Version " + Config.minecraftVersion + " and NeoForge " + Config.loaderVersion);
@@ -410,19 +410,19 @@ public class Loader {
                             startFolder = latestVersionFolder.getAbsolutePath().substring(librariesIndex);
                         }
 
-                        Data.LogInfo("Using " + (Config.OS.contains("win") ? "WINDOWS" : "UNIX") + " System-Parameter for " + (Config.isForge ? "Forge" : "NeoForge") + " folder"); //, "Blah,blah...", TXT_CYAN);
-                        Config.startup_file = startFolder + File.separator + systemPrefix + "args.txt";
+                        Data.LogDebug("Using " + (Config.OS.contains("win") ? "WINDOWS" : "UNIX") + " System-Parameter for " + (Config.isForge ? "Forge" : "NeoForge") + " folder"); //, "Blah,blah...", TXT_CYAN);
+                        Config.startupFile = startFolder + File.separator + systemPrefix + "args.txt";
 
                         Matcher matcher = pattern.matcher(latestVersionFolder.getName());
                         if (matcher.matches()) {
-                            Config.setMinecraftVersion( Config.isForge ? matcher.group("minecraftVersion") : "1." + matcher.group("minecraftVersion") );
+                            Config.minecraftVersion =  Config.isForge ? matcher.group("minecraftVersion") : "1." + matcher.group("minecraftVersion");
                             Config.loaderVersion = Config.isForge ? matcher.group("loaderVersion") : latestVersionFolder.getName();
                             LogInfo("Found Minecraft: " + Config.minecraftVersion + " with " + (Config.isForge ? "Forge" : "NeoForge") + "-Version: " + Config.loaderVersion);
                         }
                         Data.LogDebug("Found MC-Version: " + Config.minecraftVersion);
                         Data.LogDebug("Found Loader-Version: " + Config.loaderVersion);
 
-                        Data.LogDebug("Startup-File: " + Config.startup_file);
+                        Data.LogDebug("Startup-File: " + Config.startupFile);
                         Data.LogDebug("Required files exist in the latest version folder of " + loaderFolder.getPath());
                     } else {
                         //Config.startupError = true;
@@ -468,9 +468,9 @@ public class Loader {
                 Matcher matcher = Config.Pattern_Forge_startfile.matcher(matchingFile.getName());
 
                 if ( matcher.matches() ) {
-                    Config.setMinecraftVersion( matcher.group(1) );
+                    Config.minecraftVersion =  matcher.group(1);
                     Config.loaderVersion = matcher.group(2);
-                    Config.startup_file = matchingFile.getName();
+                    Config.startupFile = matchingFile.getName();
                     LogInfo("Found Minecraft: " + Config.minecraftVersion + " with Forge " + Config.loaderVersion);
                     return;
                 }
