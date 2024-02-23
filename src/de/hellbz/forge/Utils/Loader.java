@@ -18,11 +18,8 @@ public class Loader {
 
         Pattern pattern_auto = Pattern.compile("forge-auto-install.txt", Pattern.CASE_INSENSITIVE);
 
-        Boolean installerFile = false;
         Boolean autoFile = false;
-        String minecraftVersion = null;
         String loaderType = null;
-        String loaderVersion = null;
 
         // try-catch block to handle exceptions
         try {
@@ -74,7 +71,7 @@ public class Loader {
             loaderType = Config.autoProps.getProperty("loaderType");
             Config.loaderVersion = Config.autoProps.getProperty("loaderVersion");
 
-            if (Config.minecraftVersion == null || Config.minecraftVersion.trim().isEmpty() || loaderType == null || loaderType.trim().isEmpty() || loaderVersion == null || loaderVersion.trim().isEmpty() ) {
+            if (Config.minecraftVersion == null || Config.minecraftVersion.trim().isEmpty() || loaderType == null || loaderType.trim().isEmpty() || Config.loaderVersion == null || Config.loaderVersion.trim().isEmpty() ) {
 
                 FileOperation.downloadOrReadFile("/res/forge-auto-install.txt" , Config.rootFolder + File.separator + "forge-auto-install.txt" );
                 LogWarning("Found Error in the \"forge-auto-install.txt\", saved the File correct, please check the File.");
@@ -82,13 +79,13 @@ public class Loader {
                 return false;
             }
 
-            if ( !minecraftVersion.matches("(?i)^[0-9.]+$|^latest$" ) ) {
+            if ( !Config.minecraftVersion.matches("(?i)^[0-9.]+$|^latest$" ) ) {
                 LogWarning("The Setting minecraftVersion in \"forge-auto-install.txt\", must be \"1.20.4\" or \"latest\".");
                 Config.startupError = true;
                 return false;
             }
 
-            if ( !loaderVersion.matches("(?i)^[0-9.]+$|^latest$|^recommended$" ) ) {
+            if ( !Config.loaderVersion.matches("(?i)^[0-9.]+$|^latest$|^recommended$" ) ) {
                 LogWarning("The Setting loaderVersion in \"forge-auto-install.txt\", must be \"1.20.4\" or \"latest\" or \"recommended\".");
                 Config.startupError = true;
                 return false;
@@ -104,25 +101,25 @@ public class Loader {
 
             if ( loaderType.equalsIgnoreCase("forge") ){
                 Config.isForge = true;
-                if ( minecraftVersion.equalsIgnoreCase("latest") ) {
+                if ( Config.minecraftVersion.equalsIgnoreCase("latest") ) {
                     Config.minecraftVersion = firstForgeVersionKey;
-                } else Config.minecraftVersion = minecraftVersion;
+                } else Config.minecraftVersion = Config.minecraftVersion;
 
-                if ( forgeVersions.containsKey(Config.minecraftVersion) && loaderVersion.equalsIgnoreCase("latest") ){
+                if ( forgeVersions.containsKey(Config.minecraftVersion) && Config.loaderVersion.equalsIgnoreCase("latest") ){
                     Config.loaderVersion = forgeVersions.get(Config.minecraftVersion).get("latest").toString();
-                }else if ( forgeVersions.containsKey(Config.minecraftVersion) && forgeVersions.get(Config.minecraftVersion).containsKey("recommended") && loaderVersion.equalsIgnoreCase("recommended") ){
+                }else if ( forgeVersions.containsKey(Config.minecraftVersion) && forgeVersions.get(Config.minecraftVersion).containsKey("recommended") && Config.loaderVersion.equalsIgnoreCase("recommended") ){
                     Config.loaderVersion = forgeVersions.get(Config.minecraftVersion).get("recommended").toString();
-                } else Config.loaderVersion = loaderVersion;
+                } else Config.loaderVersion = Config.loaderVersion;
 
             }else if ( loaderType.equalsIgnoreCase("neoforge") ){
                 Config.isForge = false;
-                if ( minecraftVersion.equalsIgnoreCase("latest") ){
+                if ( Config.minecraftVersion.equalsIgnoreCase("latest") ){
                     Config.minecraftVersion = firstNeoVersionKey;
-                } else Config.minecraftVersion = minecraftVersion;
+                } else Config.minecraftVersion = Config.minecraftVersion;
 
-                if ( neoVersions.containsKey(Config.minecraftVersion) && loaderVersion.equalsIgnoreCase("latest") ){
+                if ( neoVersions.containsKey(Config.minecraftVersion) && Config.loaderVersion.equalsIgnoreCase("latest") ){
                     Config.loaderVersion = neoVersions.get(Config.minecraftVersion).get("latest").toString();
-                }else Config.loaderVersion = loaderVersion;
+                }else Config.loaderVersion = Config.loaderVersion;
 
             }
 
@@ -168,7 +165,7 @@ public class Loader {
 
             if (forgeVersions.containsKey(Config.minecraftVersion)) {
                 LogInfo("Wich FORGE-Version you like to install [ Latest:  " + (forgeVersions.containsKey(Config.minecraftVersion) ? (String) forgeVersions.get(Config.minecraftVersion).get("latest") : "") + ", Recommended:  " + (forgeVersions.containsKey(Config.minecraftVersion) ? (String) forgeVersions.get(Config.minecraftVersion).get("recommended") : "") + " ]:");
-                LogInfo("You can also install all other Versions, listed on this Site: https://files.minecraftforge.net/net/minecraftforge/forge/index_" + minecraftVersion + ".html");
+                LogInfo("You can also install all other Versions, listed on this Site: https://files.minecraftforge.net/net/minecraftforge/forge/index_" + Config.minecraftVersion + ".html");
             }
             if (neoVersions.containsKey(Config.minecraftVersion)) {
                 LogInfo("Wich NeoFORGED-Version you like to install [ Latest:  " + (neoVersions.containsKey(Config.minecraftVersion) ? (String) neoVersions.get(Config.minecraftVersion).get("latest") : "") + " ]:");
@@ -318,9 +315,9 @@ public class Loader {
                     LogInfo("Done installing loader...");
                     LogInfo("Deleting leftover Files, after installation!");
 
-                    final java.io.File installerFile2 = new java.io.File(Config.rootFolder + java.io.File.separator + Config.installerFile);
-                    if (installerFile2.exists()) {
-                        Files.delete(installerFile2.toPath());
+                    final java.io.File installerFile = new java.io.File(Config.rootFolder + java.io.File.separator + Config.installerFile);
+                    if (installerFile.exists()) {
+                        Files.delete(installerFile.toPath());
                     }
 
                     final java.io.File installerFileLog = new java.io.File(Config.rootFolder + java.io.File.separator + Config.installerFile + ".log");
