@@ -9,17 +9,17 @@ public class Remote {
 
     public static void checkForUpdate() {
 
-        String localVersionPath = "/res/version.xml"; // Lokaler Pfad zur XML-Datei im Ressourcenordner
-        String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/master/res/version.xml"; // Remote-URL zur XML-Datei auf GitHub
+        String localVersionPath = "/res/modInfo.json"; // Lokaler Pfad zur XML-Datei im Ressourcenordner
+        String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/master/res/modInfo.json"; // Remote-URL zur XML-Datei auf GitHub
 
         // Lokale Datei speichern und lesen
 
-        String localVersion = Data.getFromXML( (String) FileOperation.downloadOrReadFile(localVersionPath).getContent(), "application/version");
+        String localVersion = Data.getJsonValue( (String) FileOperation.downloadOrReadFile(localVersionPath).getContent() , "version" );
 
         FileOperation remoteContent = FileOperation.downloadOrReadFile(remoteVersionUrl);
         String remoteVersion = null;
         if (remoteContent.getResponseCode() == 200) {
-            remoteVersion = Data.getFromXML( (String) remoteContent.getContent(), "application/version");
+            remoteVersion = Data.getJsonValue( (String) remoteContent.getContent(), "version");
         }
         if ((remoteVersion != null || localVersion != null) && Net.isConnected) {
             Data.LogDebug("Local version: " + localVersion);
