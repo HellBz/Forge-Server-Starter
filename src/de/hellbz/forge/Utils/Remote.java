@@ -36,7 +36,7 @@ public class Remote {
 
                 //Data.LogWarning("Latest Update if from: " + last_git_update + " on GitHub.");
                 getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/version.xml");
-                String committedDate = getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/version.xml");
+                String committedDate = getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/modInfo.jsona");
                 Data.LogWarning("Latest Update if from: " + committedDate + " on GitHub.");
                 Data.LogWarning("You find the newest Versions there:");
                 Data.LogWarning("https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
