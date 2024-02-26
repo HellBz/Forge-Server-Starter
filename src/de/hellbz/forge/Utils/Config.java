@@ -77,7 +77,6 @@ public class Config {
                                                     "pause\n";
 
 
-
     public static String fileAutoLnxFileString =    "java -jar minecraft_server.jar -autoFile nogui";
     public static String fileAutoWinFileString =    "@echo off\n" +
                                                     fileAutoLnxFileString + "\n" +
