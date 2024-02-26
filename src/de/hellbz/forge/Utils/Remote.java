@@ -10,7 +10,7 @@ public class Remote {
     public static void checkForUpdate() {
 
         String localVersionPath = "/res/modInfo.json"; // Lokaler Pfad zur XML-Datei im Ressourcenordner
-        String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/master/res/modInfo.json"; // Remote-URL zur XML-Datei auf GitHub
+        String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/master" + localVersionPath; // Remote-URL zur XML-Datei auf GitHub
 
         // Lokale Datei speichern und lesen
 
@@ -36,7 +36,7 @@ public class Remote {
 
                 //Data.LogWarning("Latest Update if from: " + last_git_update + " on GitHub.");
                 getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/version.xml");
-                String committedDate = getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/modInfo.jsona");
+                String committedDate = getGitHubCommittedDate( remoteVersionUrl );
                 Data.LogWarning("Latest Update if from: " + committedDate + " on GitHub.");
                 Data.LogWarning("You find the newest Versions there:");
                 Data.LogWarning("https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
@@ -44,7 +44,7 @@ public class Remote {
             } else {
                 Data.LogInfo("----------------------------------------------------------------");
                 Data.LogInfo("You have the latest version of F-S-S, with: " + Data.GREEN_BRIGHT + remoteVersion + Data.TXT_RESET);
-                String committedDate = getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/version.xml");
+                String committedDate = getGitHubCommittedDate(remoteVersionUrl);
                 Data.LogInfo("Latest Update if from: " + committedDate + " on GitHub.");
                 Data.LogInfo("You find all Versions there:");
                 Data.LogInfo("https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
