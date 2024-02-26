@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static de.hellbz.forge.Utils.Data.*;
@@ -30,7 +33,13 @@ public class ServerStarter {
         // Google.LogToGForm();
 
         if (Arrays.toString(args).toLowerCase().contains("-autofile") ) {
-            FileOperation.downloadOrReadFile("/res/forge-auto-install.txt" , Config.rootFolder + File.separator + "forge-auto-install.txt" );
+
+            try {
+            Files.write( Paths.get(Config.rootFolder + File.separator + "forge-auto-install.txt"),  Config.fileAutoFileString.getBytes(StandardCharsets.UTF_8 ) );
+            } catch (Exception e) {
+                //e.printStackTrace();
+            }
+
             LogWarning("Auto Installation-File successfully created.");
             LogError("EXIT FORGE-Server-Starter ");
             LogError("-----------------------------------------------");

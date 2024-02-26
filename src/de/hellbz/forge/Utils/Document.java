@@ -2,6 +2,7 @@ package de.hellbz.forge.Utils;
 
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,8 +50,17 @@ public class Document {
     public static void StartFile() {
 
         Data.LogInfo("Creating " + (Config.OS.contains("win") ? "WINDOWS" : "UNIX") + "  Start-File.");
-        FileOperation.downloadOrReadFile("/res/start_server." + (Config.OS.contains("win") ? "bat" : "sh")  , Config.rootFolder + File.separator  + "start_server." + (Config.OS.contains("win") ? "bat" : "sh") );
-        FileOperation.downloadOrReadFile("/res/generate_auto_installation_file." + (Config.OS.contains("win") ? "bat" : "sh")  , Config.rootFolder + File.separator  + "generate_auto_installation_file." + (Config.OS.contains("win") ? "bat" : "sh") );
+
+        try {
+            Files.write( Paths.get(Config.rootFolder + File.separator  + "start_server." + (Config.OS.contains("win") ? "bat" : "sh" )),  (Config.OS.contains("win") ? Config.fileStartWinFileString : Config.fileStartLnxFileString ).getBytes(StandardCharsets.UTF_8 ) );
+            Files.write( Paths.get(Config.rootFolder + File.separator  + "generate_auto_installation_file." + (Config.OS.contains("win") ? "bat" : "sh")),  (Config.OS.contains("win") ? Config.fileAutoWinFileString : Config.fileAutoLnxFileString ).getBytes(StandardCharsets.UTF_8 ) );
+
+            FileOperation.downloadOrReadFile("/res/start_server" + (Config.OS.contains("win") ? "_win" : "_lnx") + ".txt"  , Config.rootFolder + File.separator  + "start_server." + (Config.OS.contains("win") ? "bat" : "sh") );
+            FileOperation.downloadOrReadFile("/res/generate_auto_installation_file" + (Config.OS.contains("win") ? "_win" : "_lnx")  + ".txt" , Config.rootFolder + File.separator  + "generate_auto_installation_file." + (Config.OS.contains("win") ? "bat" : "sh") );
+
+        } catch (Exception e) {
+            //e.printStackTrace();
+        }
     }
 
     /* AI optimized https://chat.openai.com/share/de913bc3-3958-477d-aefd-0a5387bda14a */
