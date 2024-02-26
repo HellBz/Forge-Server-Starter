@@ -3,3 +3,4 @@ out/*
 !out/compiled/minecraft_server.jar
 test/
 server_starter.conf
+/src/de/hellbz/forge/Utils/NotInUse/*
