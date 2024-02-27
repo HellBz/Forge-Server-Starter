@@ -27,13 +27,10 @@ public class Remote {
             //localVersion = "1.0"; //Just for DEBUG purposes
             // Vergleich der Versionen mit der benutzerdefinierten Vergleichsfunktion
             Data.VersionComparator versionComparator = new Data.VersionComparator();
+            String committedDate = getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/modInfo.json");
             if (versionComparator.compare(localVersion, remoteVersion) < 0) {
                 Data.LogWarning("----------------------------------------------------------------");
                 Data.LogWarning(Data.CYAN_BRIGHT + "Update is available" + Data.TXT_RESET + ", New Version: " + Data.GREEN_BRIGHT + remoteVersion + Data.TXT_RESET + ", Your local Version is. " + Data.RED_BOLD + localVersion + " " + Data.TXT_RESET);
-                // Beispielaufrufe mit verschiedenen Parametern
-
-                getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/version.xml");
-                String committedDate = getGitHubCommittedDate( remoteVersionUrl );
                 Data.LogWarning("Latest Update if from: " + committedDate + " on GitHub.");
                 Data.LogWarning("You find the newest Versions there:");
                 Data.LogWarning("https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
@@ -41,7 +38,6 @@ public class Remote {
             } else {
                 Data.LogInfo("----------------------------------------------------------------");
                 Data.LogInfo("You have the latest version of F-S-S, with: " + Data.GREEN_BRIGHT + remoteVersion + Data.TXT_RESET);
-                String committedDate = getGitHubCommittedDate(remoteVersionUrl);
                 Data.LogInfo("Latest Update if from: " + committedDate + " on GitHub.");
                 Data.LogInfo("You find all Versions there:");
                 Data.LogInfo("https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
