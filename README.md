@@ -54,3 +54,4 @@ We welcome any feedback or suggestions for improvement. Feel free to open an iss
 -> [Report Issue here](https://legacy.curseforge.com/minecraft/mc-mods/forge-server-starter/issues)
 
 Optimize your FORGE server launch with our Server Starter and enjoy a seamless gaming experience.
+
