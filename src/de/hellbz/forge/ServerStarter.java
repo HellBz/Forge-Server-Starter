@@ -147,7 +147,7 @@ public class ServerStarter {
 
                 Comparator<String> versionComparator = new VersionComparator();
 
-                LogDebug( Config.startupFile.toString() );
+                LogDebug( Config.startupFile );
 
                 if (Config.startupFile.endsWith(".jar")) {
                     where.add("-jar");

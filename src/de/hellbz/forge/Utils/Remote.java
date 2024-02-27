@@ -32,9 +32,6 @@ public class Remote {
                 Data.LogWarning(Data.CYAN_BRIGHT + "Update is available" + Data.TXT_RESET + ", New Version: " + Data.GREEN_BRIGHT + remoteVersion + Data.TXT_RESET + ", Your local Version is. " + Data.RED_BOLD + localVersion + " " + Data.TXT_RESET);
                 // Beispielaufrufe mit verschiedenen Parametern
 
-                //String last_git_update = GitHubAPI.sendRequest("repos/HellBz/Forge-Server-Starter/commits", "0/commit/committer/date", "res/version.xml");
-
-                //Data.LogWarning("Latest Update if from: " + last_git_update + " on GitHub.");
                 getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/version.xml");
                 String committedDate = getGitHubCommittedDate( remoteVersionUrl );
                 Data.LogWarning("Latest Update if from: " + committedDate + " on GitHub.");
@@ -67,16 +64,16 @@ public class Remote {
                 if (matcher.find()) {
                     committedDate = matcher.group(1);
                     //System.out.println("Committed Date: " + committedDate);
-                    
-                    
-                } else {
-                    //System.out.println("Committed Date nicht gefunden.");
-                }
 
-            } else {
+
+                } /* else {
+                    //System.out.println("Committed Date nicht gefunden.");
+                } */
+
+            } /* else {
                 //System.out.println("Fehler beim Lesen der Remote-Datei. Response-Code: " + remoteReadResult.getResponseCode());
                 //System.out.println("Zusätzliche Informationen: " + remoteReadResult.getAdditionalData());
-            }
+            } */
         }
         return committedDate;
     }

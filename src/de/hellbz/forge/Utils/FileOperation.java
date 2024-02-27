@@ -9,9 +9,9 @@ import java.nio.file.StandardCopyOption;
 
 public class FileOperation {
 
-    private int responseCode;
-    private Object content;
-    private Object additionalData;
+    private final int responseCode;
+    private final Object content;
+    private final Object additionalData;
 
     // Konstruktor
     public FileOperation(int responseCode, Object content, Object additionalData) {
@@ -39,7 +39,7 @@ public class FileOperation {
     }
 
     public static FileOperation downloadOrReadFile(File source, String destinationPath) {
-        try (InputStream in = new FileInputStream(source)) {
+        try ( InputStream in = Files.newInputStream(source.toPath()) ) {
             return readFileContent(in, destinationPath);
         } catch (IOException e) {
             return new FileOperation(500, null, "File-Operation failed: " + e.getMessage());
@@ -53,7 +53,7 @@ public class FileOperation {
     public static FileOperation downloadOrReadFile(String source, String destinationPath) {
         boolean isUrl = source.toLowerCase().startsWith("http://") || source.toLowerCase().startsWith("https://");
 
-        try (InputStream in = isUrl ? new URL(source).openStream() : FileOperation.class.getResourceAsStream(source) != null ? FileOperation.class.getResourceAsStream(source) : new FileInputStream(source)) {
+        try (InputStream in = isUrl ? new URL(source).openStream() : FileOperation.class.getResourceAsStream(source) != null ? FileOperation.class.getResourceAsStream(source) : Files.newInputStream(Paths.get(source))) {
             return readFileContent(in, destinationPath);
         } catch (IOException e) {
             return new FileOperation(500, null, "File-Operation failed: " + e.getMessage());

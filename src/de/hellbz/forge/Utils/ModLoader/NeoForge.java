@@ -42,7 +42,22 @@ public class NeoForge {
                         Map<String, Object> versionInfo = NeoVersions.getOrDefault("1." + mcVersion, new HashMap<>());
 
                         // Hol dir das JSON-Array der Versionen aus der Map oder erstelle eine neue Liste
-                        List<String> versionsList = (List<String>) versionInfo.getOrDefault("versions", new ArrayList<>());
+                        //List<String> versionsList = (List<String>) versionInfo.getOrDefault("versions", new ArrayList<>());
+
+                        // Sicherstellen, dass wir eine List<String> aus der Map extrahieren
+                        Object versionsObject = versionInfo.getOrDefault("versions", new ArrayList<String>());
+                        List<String> versionsList = new ArrayList<>();
+
+                        if (versionsObject instanceof List<?>) {
+                            for (Object item : (List<?>) versionsObject) {
+                                if (item instanceof String) {
+                                    versionsList.add((String) item);
+                                } else {
+                                    // Optional: Fehlerbehandlung, wenn ein Element kein String ist
+                                    Data.LogDebug("An element was not a String, has been skipped: " + item );
+                                }
+                            }
+                        }
 
                         // Füge die NeoForge-Version hinzu
                         versionsList.add(version);

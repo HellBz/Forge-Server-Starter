@@ -91,11 +91,14 @@ public class Document {
             // If the file doesn't exist, create it
             if (!file.exists()) {
                 try {
-                    if (!file.createNewFile()) {
-                        // Error creating the file
+                    boolean isFileCreated = file.createNewFile();
+                    if (!isFileCreated) {
+                        // Logge die Information oder handle den Fall, dass die Datei nicht erstellt werden konnte.
+                        Data.LogDebug("The file \"server-starter.log\" could not be created.");
                     }
                 } catch (IOException e) {
                     // e.printStackTrace();
+                    Data.LogDebug("Failed to create the file: " + file.getPath() + " Message: " + e );
                 }
             }
         }
@@ -148,14 +151,18 @@ public class Document {
                 return Files.readAllBytes(localFilePath);
             }
         }
-
+        byte[] fileContent;
         // Try to download the remote file.
-        byte[] fileContent = null;
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         try (InputStream in = remoteURL.openStream()) {
-            fileContent = new byte[in.available()];
-            in.read(fileContent);
+            byte[] data = new byte[1024]; // Ein temporäres Buffer-Array
+            int bytesRead;
+            while ((bytesRead = in.read(data)) != -1) {
+                buffer.write(data, 0, bytesRead);
+            }
+            fileContent = buffer.toByteArray();
         } catch (IOException e) {
-            // If there's an error during download, read the existing local file.
+            // Wenn ein Fehler beim Download auftritt, versuchen Sie, die vorhandene lokale Datei zu lesen.
             if (Files.exists(localFilePath)) {
                 return Files.readAllBytes(localFilePath);
             } else {
