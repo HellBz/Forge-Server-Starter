@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -177,4 +178,39 @@ public class Document {
 
         return fileContent;
     }
+
+    // Method to return the file name or a default name based on file existence and type
+    public static String getJarFileName() {
+        String defaultName = "minecraft_server.jar"; // Default file name
+        try {
+            Path jarPath = Paths.get( System.getProperty("java.class.path") );
+            if (Files.exists(jarPath) && Files.isRegularFile(jarPath)) {
+                defaultName = jarPath.getFileName().toString(); // Returns the actual file name if it's a regular file
+            }
+        } catch ( InvalidPathException e) {
+            // Log or handle exceptions if necessary
+        }
+        return defaultName; // Returns default name if the file doesn't exist, is a directory, or in case of exception
+    }
+
+    // Overloaded method to directly return true or false based on the file existence and type when true is passed
+    public static boolean getJarFileName(boolean checkExistence) {
+        if (!checkExistence) {
+            return false;
+        }
+
+        try {
+            Path jarPath = Paths.get( System.getProperty("java.class.path") );
+            return Files.exists(jarPath) && Files.isRegularFile(jarPath); // Checks if the path points to a regular file
+        } catch (InvalidPathException e) {
+            return false;
+        }
+    }
+
+    public static void main(String[] args) {
+        // Example usage
+        System.out.println(getJarFileName()); // Print the jar file name or default
+        System.out.println(getJarFileName(true)); // Print true if the path is a regular file, false otherwise
+    }
+
 }

@@ -84,21 +84,23 @@ public class ServerStarter {
             if (Arrays.toString(args).toLowerCase().contains("-xmx") || Arrays.toString(args).toLowerCase().contains("-xms") || Arrays.toString(Config.startupParameter).toLowerCase().contains("-xmx") || Arrays.toString(Config.startupParameter).toLowerCase().contains("-xms")) {
                 LogDebug("SCRIPT USE -Xmx and -Xms for Start.");
             } else {
-                // Config.startupError = true;
+                Config.startupError = true;
                 LogWarning("PLS use -Xmx and -Xms for start up this script.");
                 JFrame jFrame = new JFrame();
                 JOptionPane.showMessageDialog(jFrame, "Script only work in Batch-Mode!\nStartfile for Batch-Mode is created.");
                 Document.StartFile();
-                // System.exit(0);
+                //System.exit(0);
             }
         }
 
         //No Internet Connection, only manually installation
-        if (!Net.isConnected) {
-            LogInfo("Place your Forge-Installer-JAR directly next to the current JAR.");
-            Config.startupError = true;
-        } else {
-            Remote.checkForUpdate();
+        if ( !Config.startupError ){
+            if (!Net.isConnected) {
+                LogInfo("Place your Forge-Installer-JAR directly next to the current JAR.");
+                Config.startupError = true;
+            } else {
+                Remote.checkForUpdate();
+            }
         }
 
         //Try Auto-Installer

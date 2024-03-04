@@ -70,14 +70,14 @@ public class Config {
                                                     "# Possible options are [Version like: \"20.4.164-beta\" or \"latest\" or \"recommended\"]\n" +
                                                     "loaderVersion=latest";
 
-    public static String fileStartLnxFileString =   "java -jar minecraft_server.jar -Xmx1024M -Xms1024M nogui";
+    public static String fileStartLnxFileString =   "java -jar " + Document.getJarFileName() + " -Xmx1024M -Xms1024M nogui";
 
     public static String fileStartWinFileString =   "@echo off\n" +
                                                     fileStartLnxFileString + "\n" +
                                                     "pause\n";
 
 
-    public static String fileAutoLnxFileString =    "java -jar minecraft_server.jar -autoFile nogui";
+    public static String fileAutoLnxFileString =    "java -jar " + Document.getJarFileName() + " -autoFile nogui";
     public static String fileAutoWinFileString =    "@echo off\n" +
                                                     fileAutoLnxFileString + "\n" +
                                                     "pause\n";
