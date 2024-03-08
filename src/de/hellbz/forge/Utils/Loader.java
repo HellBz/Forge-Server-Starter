@@ -46,16 +46,16 @@ public class Loader {
         java.io.File autoConfigFile = new java.io.File("forge-auto-install.txt");
 
         // get the new versions map
-        Map<String, Map<String, Object>> forgeVersions = Forge.getVersions();
+        Config.forgeVersions = Forge.getVersions();
 
         // get the first version key
-        String firstForgeVersionKey = forgeVersions.keySet().iterator().next();
+        String firstForgeVersionKey = Config.forgeVersions.keySet().iterator().next();
 
         // get the new NEO versions map
-        Map<String, Map<String, Object>> neoVersions = NeoForge.getVersions();
+        Config.neoVersions = NeoForge.getVersions();
 
         // get the first version key
-        String firstNeoVersionKey = neoVersions.keySet().iterator().next();
+        String firstNeoVersionKey = Config.neoVersions.keySet().iterator().next();
 
 
         //LogInfo( firstEntry.toString() );
@@ -105,10 +105,10 @@ public class Loader {
                     Config.minecraftVersion = firstForgeVersionKey;
                 } else Config.minecraftVersion = Config.minecraftVersion;
 
-                if ( forgeVersions.containsKey(Config.minecraftVersion) && Config.loaderVersion.equalsIgnoreCase("latest") ){
-                    Config.loaderVersion = forgeVersions.get(Config.minecraftVersion).get("latest").toString();
-                }else if ( forgeVersions.containsKey(Config.minecraftVersion) && forgeVersions.get(Config.minecraftVersion).containsKey("recommended") && Config.loaderVersion.equalsIgnoreCase("recommended") ){
-                    Config.loaderVersion = forgeVersions.get(Config.minecraftVersion).get("recommended").toString();
+                if ( Config.forgeVersions.containsKey(Config.minecraftVersion) && Config.loaderVersion.equalsIgnoreCase("latest") ){
+                    Config.loaderVersion = Config.forgeVersions.get(Config.minecraftVersion).get("latest").toString();
+                }else if ( Config.forgeVersions.containsKey(Config.minecraftVersion) && Config.forgeVersions.get(Config.minecraftVersion).containsKey("recommended") && Config.loaderVersion.equalsIgnoreCase("recommended") ){
+                    Config.loaderVersion = Config.forgeVersions.get(Config.minecraftVersion).get("recommended").toString();
                 } else Config.loaderVersion = Config.loaderVersion;
 
             }else if ( loaderType.equalsIgnoreCase("neoforge") ){
@@ -117,8 +117,8 @@ public class Loader {
                     Config.minecraftVersion = firstNeoVersionKey;
                 } else Config.minecraftVersion = Config.minecraftVersion;
 
-                if ( neoVersions.containsKey(Config.minecraftVersion) && Config.loaderVersion.equalsIgnoreCase("latest") ){
-                    Config.loaderVersion = neoVersions.get(Config.minecraftVersion).get("latest").toString();
+                if ( Config.neoVersions.containsKey(Config.minecraftVersion) && Config.loaderVersion.equalsIgnoreCase("latest") ){
+                    Config.loaderVersion = Config.neoVersions.get(Config.minecraftVersion).get("latest").toString();
                 }else Config.loaderVersion = Config.loaderVersion;
 
             }
@@ -135,12 +135,12 @@ public class Loader {
             //LogInfo( ForgeLatestVersions.toString() );
 
             // join all keys
-            String ForgeVersionsAsString = String.join(", ", forgeVersions.keySet());
+            String ForgeVersionsAsString = String.join(", ", Config.forgeVersions.keySet());
             LogInfo(ForgeVersionsAsString);
 
 
             LogInfo("NeoFORGED is available in the following Versions:");
-            String NeoForgeVersionsAsString = String.join(", ", neoVersions.keySet());
+            String NeoForgeVersionsAsString = String.join(", ", Config.neoVersions.keySet());
 
             LogInfo(NeoForgeVersionsAsString);
 
@@ -163,16 +163,16 @@ public class Loader {
 
             Config.minecraftVersion = String.valueOf(mcVersionInput);
 
-            if (forgeVersions.containsKey(Config.minecraftVersion)) {
-                LogInfo("Wich FORGE-Version you like to install [ Latest:  " + (forgeVersions.containsKey(Config.minecraftVersion) ? (String) forgeVersions.get(Config.minecraftVersion).get("latest") : "") + ", Recommended:  " + (forgeVersions.containsKey(Config.minecraftVersion) ? (String) forgeVersions.get(Config.minecraftVersion).get("recommended") : "") + " ]:");
+            if (Config.forgeVersions.containsKey(Config.minecraftVersion)) {
+                LogInfo("Wich FORGE-Version you like to install [ Latest:  " + (Config.forgeVersions.containsKey(Config.minecraftVersion) ? (String) Config.forgeVersions.get(Config.minecraftVersion).get("latest") : "") + ", Recommended:  " + (Config.forgeVersions.containsKey(Config.minecraftVersion) ? (String) Config.forgeVersions.get(Config.minecraftVersion).get("recommended") : "") + " ]:");
                 LogInfo("You can also install all other Versions, listed on this Site: https://files.minecraftforge.net/net/minecraftforge/forge/index_" + Config.minecraftVersion + ".html");
             }
-            if (neoVersions.containsKey(Config.minecraftVersion)) {
-                LogInfo("Wich NeoFORGED-Version you like to install [ Latest:  " + (neoVersions.containsKey(Config.minecraftVersion) ? (String) neoVersions.get(Config.minecraftVersion).get("latest") : "") + " ]:");
+            if (Config.neoVersions.containsKey(Config.minecraftVersion)) {
+                LogInfo("Wich NeoFORGED-Version you like to install [ Latest:  " + (Config.neoVersions.containsKey(Config.minecraftVersion) ? (String) Config.neoVersions.get(Config.minecraftVersion).get("latest") : "") + " ]:");
                 LogInfo("You can also install all other Versions, listed on this Site: https://projects.neoforged.net/neoforged/neoforge");
             }
 
-            if (!forgeVersions.containsKey(Config.minecraftVersion) && !neoVersions.containsKey(Config.minecraftVersion)) {
+            if (!Config.forgeVersions.containsKey(Config.minecraftVersion) && !Config.neoVersions.containsKey(Config.minecraftVersion)) {
                 // Der Schlüssel existiert in der Map nicht
                 LogError("The Minecraft-Version \"" + Config.minecraftVersion + "\" not exists, restart Downloader.");
                 checkLoaderVersion();
@@ -186,7 +186,7 @@ public class Loader {
             Pattern pattern = Pattern.compile(Config.loaderVersion);
 
             // Suche im String nach Übereinstimmungen mit dem Muster
-            Matcher neoMatcher = pattern.matcher(neoVersions.toString());
+            Matcher neoMatcher = pattern.matcher(Config.neoVersions.toString());
 
             if (neoMatcher.find()) {
                 Config.isForge = false;
@@ -215,25 +215,23 @@ public class Loader {
             return false; // Abbruch der Ausführung
         }
 
-        FileOperation fileOperation = null;
-        FileOperation fileDownload = null;
         Map<String, String> links = null;
         if ( !Config.isForge ) {
             links = NeoForge.getFileLinks( Config.loaderVersion );
-            fileDownload = FileOperation.downloadOrReadFile(links.get("fileURL"), Config.rootFolder + links.get("localFilePath"));
         } else {
             links = Forge.getFileLinks( Config.minecraftVersion, Config.loaderVersion );
-            // System.out.println ( Config.minecraftVersion + " " + Config.isForge +  " " + Config.loaderVersion );
-            fileDownload = FileOperation.downloadOrReadFile(links.get("fileURL"), Config.rootFolder + links.get("localFilePath"));
         }
 
-        if (fileDownload != null && fileDownload.getResponseCode() == 200) {
-            Data.LogInfo("Loader downloaded: " + links.get("fileURL") + " to " + Config.rootFolder + links.get("localFilePath"));
-            return true;
-        } else {
-            Data.LogError("Error reading remote file. Response code: " + fileDownload.getResponseCode());
-            return false;
-        }
+        if ( !Config.startupError ) {
+            FileOperation fileDownload = FileOperation.downloadOrReadFile(links.get("fileURL"), Config.rootFolder + links.get("localFilePath"));
+            if (fileDownload != null && fileDownload.getResponseCode() == 200) {
+                Data.LogInfo("Loader downloaded: " + links.get("fileURL") + " to " + Config.rootFolder + links.get("localFilePath"));
+                return true;
+            } else {
+                Data.LogError("Error reading remote file. Response code: " + fileDownload.getResponseCode());
+                return false;
+            }
+        } else return false;
 
     }
 

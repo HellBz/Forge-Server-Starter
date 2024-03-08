@@ -6,33 +6,40 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
 public class Config {
 
-    public static final String OS = System.getProperty("os.name").toLowerCase();
-    //Set Library-Path's
-    public static java.io.File rootFolder = new java.io.File("./");
-    public static java.io.File librariesFolder = new java.io.File(rootFolder, "libraries");
-    public static java.io.File minecraftForgeFolder = new java.io.File(librariesFolder, "net/minecraftforge/forge");
-    public static java.io.File neoForgeFolder = new java.io.File(librariesFolder, "net/neoforged/neoforge");
-    public static Pattern Pattern_Forge = Pattern.compile("forge-([.0-9]+)-([.0-9]+)-(universal|installer).([jar|zip]+)", Pattern.CASE_INSENSITIVE);
-    public static Pattern Pattern_Forge_startfile = Pattern.compile("(minecraftforge-universal-|forge-)([0-9.]+)-([0-9.]+)(\\.jar|universal\\.jar|-universal\\.jar|-shim\\.jar)", Pattern.CASE_INSENSITIVE);
-    public static Pattern Pattern_NeoForge = Pattern.compile("neoforge-(\\d+\\.\\d+\\.\\d+)(?:-beta)?-installer\\.(?:jar|zip)", Pattern.CASE_INSENSITIVE);
+    public static String startupFile = null;
+    public static String[] startupParameter = null;
+    public static boolean startupError = false;
     public static Properties configProps;
     public static Properties autoProps;
-    public static boolean startupError = false;
+    public static String[] CMD_ARRAY = null;
+    public static String installerFile = null;
+
     public static boolean isForge = false;
     public static String minecraftVersion = null;
     public static String loaderVersion = null;
-    public static String[] CMD_ARRAY = null;
+
+    //Set Library-Path's
+    public static java.io.File rootFolder = new java.io.File("./");
+    public static java.io.File librariesFolder = new java.io.File(rootFolder, "libraries");
+
+    public static java.io.File minecraftForgeFolder = new java.io.File(librariesFolder, "net/minecraftforge/forge");
+    public static Pattern Pattern_Forge = Pattern.compile("forge-([.0-9]+)-([.0-9]+)-(universal|installer).([jar|zip]+)", Pattern.CASE_INSENSITIVE);
+    public static Pattern Pattern_Forge_startfile = Pattern.compile("(minecraftforge-universal-|forge-)([0-9.]+)-([0-9.]+)(\\.jar|universal\\.jar|-universal\\.jar|-shim\\.jar)", Pattern.CASE_INSENSITIVE);
+    public static Map<String, Map<String, Object>> forgeVersions = null;
+
+    public static java.io.File neoForgeFolder = new java.io.File(librariesFolder, "net/neoforged/neoforge");
+    public static Pattern Pattern_NeoForge = Pattern.compile("neoforge-(\\d+\\.\\d+\\.\\d+)(?:-beta)?-installer\\.(?:jar|zip)", Pattern.CASE_INSENSITIVE);
+
+    public static Map<String, Map<String, Object>> neoVersions = null;
+
+    public static final String OS = System.getProperty("os.name").toLowerCase();
     public static Integer javaVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));
-    public static String[] startupParameter = null;
-
-    public static String startupFile = null;
-
-    public static String installerFile = null;
 
     public static String fileConfigString =         "# Forge Server-Starter Configuration\n" +
                                                     "\n" +
