@@ -48,14 +48,9 @@ public class Loader {
         // get the new versions map
         Config.forgeVersions = Forge.getVersions();
 
-        // get the first version key
-        String firstForgeVersionKey = Config.forgeVersions.keySet().iterator().next();
-
         // get the new NEO versions map
         Config.neoVersions = NeoForge.getVersions();
 
-        // get the first version key
-        String firstNeoVersionKey = Config.neoVersions.keySet().iterator().next();
 
 
         //LogInfo( firstEntry.toString() );
@@ -97,12 +92,10 @@ public class Loader {
                 return false;
             }
 
-
-
             if ( loaderType.equalsIgnoreCase("forge") ){
                 Config.isForge = true;
                 if ( Config.minecraftVersion.equalsIgnoreCase("latest") ) {
-                    Config.minecraftVersion = firstForgeVersionKey;
+                    Config.minecraftVersion = Config.forgeVersions.keySet().iterator().next();
                 } else Config.minecraftVersion = Config.minecraftVersion;
 
                 if ( Config.forgeVersions.containsKey(Config.minecraftVersion) && Config.loaderVersion.equalsIgnoreCase("latest") ){
@@ -114,13 +107,12 @@ public class Loader {
             }else if ( loaderType.equalsIgnoreCase("neoforge") ){
                 Config.isForge = false;
                 if ( Config.minecraftVersion.equalsIgnoreCase("latest") ){
-                    Config.minecraftVersion = firstNeoVersionKey;
+                    Config.minecraftVersion = Config.neoVersions.keySet().iterator().next();
                 } else Config.minecraftVersion = Config.minecraftVersion;
 
                 if ( Config.neoVersions.containsKey(Config.minecraftVersion) && Config.loaderVersion.equalsIgnoreCase("latest") ){
                     Config.loaderVersion = Config.neoVersions.get(Config.minecraftVersion).get("latest").toString();
                 }else Config.loaderVersion = Config.loaderVersion;
-
             }
 
             LogInfo("Found \"forge-auto-install.txt\" with Minecraft-Version " + Config.minecraftVersion + " and " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion );
@@ -129,7 +121,10 @@ public class Loader {
         } else {
 
             // GUIDED installation
-            LogWarning("Not found the \"forge-auto-install.txt\", start manuell installation-Process.");
+            LogWarning("Not found the \"forge-auto-install.txt\", start guided installation-Process.");
+
+
+
             LogInfo("FORGE is available in the following Versions:");
 
             //LogInfo( ForgeLatestVersions.toString() );
@@ -147,7 +142,14 @@ public class Loader {
             // Using Scanner for Getting Input from User
             Scanner in = new Scanner(System.in);
 
-            LogInfo("Wich MINECRAFT-Version you like to install [ eg. " + (firstForgeVersionKey != null ? firstForgeVersionKey : "") + " ]:");
+            String latestMinecraftReleaseVersion = null;
+            FileOperation fileDownload = FileOperation.downloadOrReadFile( "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json" );
+            if (fileDownload != null && fileDownload.getResponseCode() == 200) {
+                latestMinecraftReleaseVersion = getJsonValue( fileDownload.getContent().toString() , "latest/release" );
+            }
+            LogInfo("Wich MINECRAFT-Version you like to install [ eg. " + latestMinecraftReleaseVersion + " ]:");
+
+
             String mcVersionInput = in.nextLine();
 
             StringBuilder mcVersionFiltered = new StringBuilder();

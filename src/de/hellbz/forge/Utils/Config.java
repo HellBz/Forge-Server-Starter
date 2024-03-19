@@ -3,15 +3,13 @@ package de.hellbz.forge.Utils;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
 public class Config {
 
+    public static final String PROPERTIES_FILE = "server_starter.conf"; ;
     public static String startupFile = null;
     public static String[] startupParameter = null;
     public static boolean startupError = false;
@@ -41,55 +39,14 @@ public class Config {
     public static final String OS = System.getProperty("os.name").toLowerCase();
     public static Integer javaVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));
 
-    public static String fileConfigString =         "# Forge Server-Starter Configuration\n" +
-                                                    "\n" +
-                                                    "# There you can setup your own Timezone\n" +
-                                                    "# More timezones in this list:\n" +
-                                                    "# -> https://en.wikipedia.org/wiki/List_of_tz_database_time_zones\n" +
-                                                    "# For Example timezone=Europe/Berlin\n" +
-                                                    "timezone=UTC\n" +
-                                                    "\n" +
-                                                    "# Here you can set your own JAVA-Path for Starting the Server\n" +
-                                                    "# For Example java_path=G:\\\\path\\to\\java_installation\\bin\\java.exe\n" +
-                                                    "java_path=java\n" +
-                                                    "\n" +
-                                                    "# You wish to log all Actions from F-S-S to a File..\n" +
-                                                    "# You can find the Log in \"/logs\"-Folder\n" +
-                                                    "# For Example log_to_file=false\n" +
-                                                    "log_to_file=true\n" +
-                                                    "\n" +
-                                                    "# You like to have a Debug-Log\n" +
-                                                    "# With this you can see all Actions from F-S-S\n" +
-                                                    "# For Example debug=false\n" +
-                                                    "debug=true";
-
-    public static String fileAutoFileString =       "# Forge Auto-Install Configuration\n" +
-                                                    "\n" +
-                                                    "# Specify your desired Minecraft-Version.\n" +
-                                                    "# Possible options are [Version like: \"1.20.4\" or \"latest\"]\n" +
-                                                    "minecraftVersion=latest\n" +
-                                                    "\n" +
-                                                    "# Specify your desired LoaderType.\n" +
-                                                    "# Possible options are [\"Forge\" or \"NeoForge\"]\n" +
-                                                    "loaderType=NeoForge\n" +
-                                                    "\n" +
-                                                    "# Specify your desired Loader-Version.\n" +
-                                                    "# Possible options are [Version like: \"20.4.164-beta\" or \"latest\" or \"recommended\"]\n" +
-                                                    "loaderVersion=latest";
-
     public static String fileStartLnxFileString =   "java -jar " + Document.getJarFileName() + " -Xmx1024M -Xms1024M nogui";
-
     public static String fileStartWinFileString =   "@echo off\n" +
                                                     fileStartLnxFileString + "\n" +
                                                     "pause\n";
-
-
     public static String fileAutoLnxFileString =    "java -jar " + Document.getJarFileName() + " -autoFile nogui";
     public static String fileAutoWinFileString =    "@echo off\n" +
                                                     fileAutoLnxFileString + "\n" +
                                                     "pause\n";
-
-
 
     static {
         // System.out.println("Config loaded.");
@@ -107,18 +64,12 @@ public class Config {
 
     }
 
-
     public static void initServerConfig() throws IOException {
 
-        java.io.File configFile = new java.io.File("server_starter.conf");
+        java.io.File configFile = new java.io.File(Config.PROPERTIES_FILE);
 
         if ( !configFile.exists()) {
-
-            try {
-                Files.write(Paths.get(Config.rootFolder + File.separator + "server_starter.conf"), Config.fileConfigString.getBytes(StandardCharsets.UTF_8));
-            } catch (Exception e) {
-                //e.printStackTrace();
-            }
+            FileOperation.downloadOrReadFile("/res/server_starter.conf", Config.rootFolder + File.separator + Config.PROPERTIES_FILE);
         }
 
             FileReader configReader = new FileReader(configFile);

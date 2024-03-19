@@ -1,5 +1,13 @@
 package de.hellbz.forge.Utils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -7,14 +15,22 @@ import static de.hellbz.forge.Utils.FileOperation.downloadOrReadFile;
 
 public class Remote {
 
+    private static final String API_URL = "https://api.hellbz.de/update/forge-server-starter/";
+
     public static void checkForUpdate() {
 
         String localVersionPath = "/res/modInfo.json"; // Lokaler Pfad zur XML-Datei im Ressourcenordner
         String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/master" + localVersionPath; // Remote-URL zur XML-Datei auf GitHub
 
-        // Lokale Datei speichern und lesen
-
         String localVersion = Data.getJsonValue( (String) FileOperation.downloadOrReadFile(localVersionPath).getContent() , "version" );
+
+        if ( Config.configProps.getProperty("unique_id_request","true" ).equals("true") ){
+            try {
+                requestUniqueID(localVersion);
+            } catch (IOException e) {
+                Data.LogDebug("An Error Occurs, while calling API : " + e );
+            }
+        }
 
         FileOperation remoteContent = FileOperation.downloadOrReadFile(remoteVersionUrl);
         String remoteVersion = null;
@@ -72,5 +88,54 @@ public class Remote {
             } */
         }
         return committedDate;
+    }
+    public static void requestUniqueID(String localVersion) throws IOException {
+
+        String uniqueId = Config.configProps.getProperty("unique_id", "" );
+
+        String response = sendApiRequest(localVersion, uniqueId);
+        String newUniqueId = Data.getJsonValue( response, "data/unique_id" );
+
+        if (!newUniqueId.equals(uniqueId)) {
+            Data.updateProperty( Config.PROPERTIES_FILE , "unique_id", newUniqueId);
+        }
+    }
+
+    private static String sendApiRequest(String localVersion, String uniqueId) throws IOException {
+
+        // URL mit Query-Parametern vorbereiten
+        String urlString = API_URL + "?version=" + URLEncoder.encode(localVersion, StandardCharsets.UTF_8.name()) +
+                (!uniqueId.isEmpty() ? "&unique_id=" + URLEncoder.encode(uniqueId, StandardCharsets.UTF_8.name()) : "");
+        URL url = new URL(urlString);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        // POST-Anfrage konfigurieren
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+        // Properties-Datei-Inhalt in einen String umwandeln
+        String propertiesToPostData = Data.propertiesToURL("server.properties");
+        if ( propertiesToPostData != null ) {
+            connection.setDoOutput(true);
+            // Properties-Datei-Inhalt in den Request-Body schreiben
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = propertiesToPostData.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
+        }
+
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                return response.toString();
+            }
+        } else {
+            throw new IOException("Failed to get response from the server. HTTP Response Code: " + responseCode);
+        }
     }
 }

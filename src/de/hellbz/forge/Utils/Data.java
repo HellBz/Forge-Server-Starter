@@ -13,13 +13,15 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.awt.*;
 import java.io.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.List;
+import java.util.*;
 
 
 public class Data {
@@ -339,4 +341,96 @@ public class Data {
             return Integer.compare(parts1.length, parts2.length);
         }
     }
+
+    public static boolean containsMemoryParameters(String[] args) {
+        return Arrays.stream(args)
+                .map(String::toLowerCase)
+                .anyMatch(arg -> arg.contains("-xmx") || arg.contains("-xms"));
+    }
+
+    public static void logSelectedSystemProperties() {
+
+        // Old implementation
+        // Properties properties = System.getProperties();
+        // properties.forEach((k, v) -> LogDebug(k + ":" + v));
+
+        List<String> relevantProperties = Arrays.asList(
+                "java.version", "java.runtime.version", "java.vm.version",
+                "java.vm.name", "java.vm.vendor", "os.name", "os.arch",
+                "os.version", "file.separator", "path.separator", "user.name",
+                "user.dir", "user.home", "java.class.path", "java.vm.specification.version",
+                "sun.management.compiler", "user.timezone"
+        );
+
+        Properties properties = System.getProperties();
+        relevantProperties.forEach(prop -> {
+            if (properties.containsKey(prop)) {
+                LogDebug(prop + ": " + properties.getProperty(prop));
+            }
+        });
+    }
+
+    public static void updateProperty(String propertiesFilePath, String key, String newValue) throws IOException {
+        List<String> updatedLines = new ArrayList<>();
+        boolean keyUpdated = false;
+
+        List<String> lines = Files.readAllLines(Paths.get(propertiesFilePath), StandardCharsets.UTF_8);
+        for (String line : lines) {
+            if (line.startsWith(key + "=")) {
+                updatedLines.add(key + "=" + newValue);
+                keyUpdated = true;
+            } else {
+                updatedLines.add(line);
+            }
+        }
+
+        if (!keyUpdated) {
+            updatedLines.add(""); // Fügt eine Leerzeile hinzu
+            updatedLines.add("#Auto added \"" + key + "\" with function updateProperty()"); // Fügt eine Leerzeile hinzu
+            updatedLines.add(key + "=" + newValue);
+        }
+
+        Files.write(Paths.get(propertiesFilePath), updatedLines, StandardCharsets.UTF_8);
+    }
+
+    public static String propertiesToURL(String propertiesFilePath) throws IOException {
+        File file = new File(propertiesFilePath);
+        if (!file.exists()) {
+            return null; // Datei existiert nicht, gib null zurück
+        }
+
+        Properties properties = new Properties();
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            properties.load(fileInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null; // Bei einem Lesefehler, gib null zurück
+        }
+
+        // Definiere die Schlüssel, die in postData aufgenommen werden sollen
+        String[] keys = {
+                "motd",
+                "max-players",
+                "level-seed",
+                "gamemode",
+                "server-ip",
+                "server-port",
+                "query.port",
+                "rcon.port"
+        };
+
+        StringBuilder postData = new StringBuilder();
+        for (String key : keys) {
+            String value = properties.getProperty(key);
+            if (value != null) { // Nur hinzufügen, wenn der Schlüssel existiert
+                if (postData.length() != 0) postData.append('&');
+                postData.append(URLEncoder.encode(key));
+                postData.append('=');
+                postData.append(URLEncoder.encode(value));
+            }
+        }
+
+        return postData.toString();
+    }
+
 }

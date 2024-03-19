@@ -1,6 +1,7 @@
 package de.hellbz.forge.Utils;
 
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -31,6 +32,38 @@ public class FileOperation {
 
     public Object getAdditionalData() {
         return additionalData;
+    }
+
+    /**
+     * Calls a URL without waiting for a response.
+     *
+     * @param urlString The URL as a String.
+     * @return A FileOperation object with the status of the operation.
+     */
+    public static FileOperation callUrlWithoutResponse(String urlString) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(urlString);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET"); // or POST, depending on the requirement
+            connection.setConnectTimeout(5000); // Sets a timeout
+            connection.connect();
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode >= 200 && responseCode < 300) {
+                // Successfully called, but content is ignored.
+                return new FileOperation(responseCode, "URL successfully called, response ignored.", null);
+            } else {
+                // The server returned an error
+                return new FileOperation(responseCode, null, "Server returned an error.");
+            }
+        } catch (IOException e) {
+            return new FileOperation(500, null, "URL call failed: " + e.getMessage());
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     // Methode zum Lesen oder Herunterladen von Dateien

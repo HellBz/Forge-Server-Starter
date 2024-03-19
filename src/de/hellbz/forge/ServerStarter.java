@@ -7,9 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static de.hellbz.forge.Utils.Data.*;
@@ -30,15 +27,9 @@ public class ServerStarter {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        // Google.LogToGForm();
-
         if (Arrays.toString(args).toLowerCase().contains("-autofile") ) {
 
-            try {
-            Files.write( Paths.get(Config.rootFolder + File.separator + "forge-auto-install.txt"),  Config.fileAutoFileString.getBytes(StandardCharsets.UTF_8 ) );
-            } catch (Exception e) {
-                //e.printStackTrace();
-            }
+            FileOperation.downloadOrReadFile("/res/forge-auto-install.txt", Config.rootFolder + File.separator + "forge-auto-install.txt" );
 
             LogWarning("Auto Installation-File successfully created.");
             LogError("EXIT FORGE-Server-Starter ");
@@ -49,18 +40,13 @@ public class ServerStarter {
         //WELCOME
         LogInfo("Checking System ...");
 
-        //System.out.println( NeoForge.getVersions().toString() );
-
-        //System.out.println( Forge.getVersions().toString() );
-
         //Get System-Variables like xmx and xms
         RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
         List<String> arguments = runtimeMxBean.getInputArguments();
         Config.startupParameter = arguments.toArray(new String[0]);
 
-        Properties properties = System.getProperties();
-        properties.forEach((k, v) -> LogDebug(k + ":" + v));
-        LogDebug("server_starter.conf: " + Config.configProps.toString());
+        Data.logSelectedSystemProperties();
+        LogDebug( Config.PROPERTIES_FILE + ": " + Config.configProps.toString() );
 
         //DEBUG
         String joinedStartupParameter = Arrays.toString(Config.startupParameter);
@@ -68,9 +54,6 @@ public class ServerStarter {
 
         String joinedStartupArgs = Arrays.toString(args);
         LogDebug("STARTUP-ARGS: " + TXT_CYAN + joinedStartupArgs + TXT_RESET);
-
-        String currentPath = new java.io.File(".").getCanonicalPath();
-        LogDebug("DIRECTORY: " + TXT_CYAN + currentPath + TXT_RESET);
 
         LogDebug("-----------------------------------------------");
 
@@ -80,16 +63,16 @@ public class ServerStarter {
 
         } else {
 
-            LogDebug(Arrays.toString(args));
-            if (Arrays.toString(args).toLowerCase().contains("-xmx") || Arrays.toString(args).toLowerCase().contains("-xms") || Arrays.toString(Config.startupParameter).toLowerCase().contains("-xmx") || Arrays.toString(Config.startupParameter).toLowerCase().contains("-xms")) {
+            if ( Data.containsMemoryParameters(args) || Data.containsMemoryParameters(Config.startupParameter)) {
                 LogDebug("SCRIPT USE -Xmx and -Xms for Start.");
             } else {
                 Config.startupError = true;
-                LogWarning("PLS use -Xmx and -Xms for start up this script.");
-                JFrame jFrame = new JFrame();
-                JOptionPane.showMessageDialog(jFrame, "Script only work in Batch-Mode!\nStartfile for Batch-Mode is created.");
+                LogWarning("Please use -Xmx and -Xms for startup this script.");
+                if (!isReallyHeadless()) {
+                    JOptionPane.showMessageDialog(null, "Script only works in Batch-Mode!\nA startup file for Batch-Mode has been created.");
+                }
                 Document.StartFile();
-                //System.exit(0);
+                // Möglichkeit, hier zu beenden, abhängig von der gewünschten Logik
             }
         }
 
@@ -183,7 +166,7 @@ public class ServerStarter {
             if (Config.CMD_ARRAY != null) {
                 LogInfo("");
                 LogInfo("Server is Running in TimeZone: " + Config.configProps.getProperty("timezone"));
-                LogInfo("Setup your own timezone in server_starter.conf");
+                LogInfo("Setup your own timezone in " + Config.PROPERTIES_FILE );
                 LogInfo("");
                 LogInfo("Start " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion + " Server");
                 LogInfo("-----------------------------------------------");
