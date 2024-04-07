@@ -13,9 +13,12 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import java.awt.*;
 import java.io.*;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -350,10 +353,6 @@ public class Data {
 
     public static void logSelectedSystemProperties() {
 
-        // Old implementation
-        // Properties properties = System.getProperties();
-        // properties.forEach((k, v) -> LogDebug(k + ":" + v));
-
         List<String> relevantProperties = Arrays.asList(
                 "java.home", "java.version", "java.runtime.version", "java.vm.version",
                 "java.vm.name", "java.vm.vendor", "os.name", "os.arch",
@@ -374,7 +373,8 @@ public class Data {
         List<String> updatedLines = new ArrayList<>();
         boolean keyUpdated = false;
 
-        List<String> lines = Files.readAllLines(Paths.get(propertiesFilePath), StandardCharsets.UTF_8);
+        Path filePath = Paths.get(propertiesFilePath);
+        List<String> lines = Files.readAllLines( filePath, StandardCharsets.UTF_8);
         for (String line : lines) {
             if (line.startsWith(key + "=")) {
                 updatedLines.add(key + "=" + newValue);
@@ -385,15 +385,15 @@ public class Data {
         }
 
         if (!keyUpdated) {
-            updatedLines.add(""); // Fügt eine Leerzeile hinzu
+            updatedLines.add(""); // Add an empty line
             updatedLines.add("#Auto added \"" + key + "\" with function updateProperty()"); // Fügt eine Leerzeile hinzu
             updatedLines.add(key + "=" + newValue);
         }
 
-        Files.write(Paths.get(propertiesFilePath), updatedLines, StandardCharsets.UTF_8);
+        Files.write( filePath, updatedLines, StandardCharsets.UTF_8);
     }
 
-    public static String propertiesToURL(String propertiesFilePath) throws IOException {
+    public static String propertiesToURL(String propertiesFilePath) {
         File file = new File(propertiesFilePath);
         if (!file.exists()) {
             return null; // Datei existiert nicht, gib null zurück
@@ -423,14 +423,49 @@ public class Data {
         for (String key : keys) {
             String value = properties.getProperty(key);
             if (value != null) { // Nur hinzufügen, wenn der Schlüssel existiert
-                if (postData.length() != 0) postData.append('&');
-                postData.append(URLEncoder.encode(key));
-                postData.append('=');
-                postData.append(URLEncoder.encode(value));
+                if (postData.length() != 0) {
+                    postData.append('&');
+                }
+                try {
+                    postData.append(URLEncoder.encode(key, StandardCharsets.UTF_8.name()));
+                    postData.append('=');
+                    postData.append(URLEncoder.encode(value, StandardCharsets.UTF_8.name()));
+                } catch (IOException e) {
+                    LogWarning("Decoding Problem: " + Config.rootFolder + File.separator + ' ' + e);
+                    // Das sollte nie passieren, da UTF-8 ein bekannter Zeichensatz ist
+                    //throw new RuntimeException("Fehler beim Kodieren der URL", e);
+                }
             }
         }
 
         return postData.toString();
+    }
+
+    public static String getMacAddress() {
+        try {
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+                // Skip loopback addresses and disabled interfaces.
+                if (networkInterface.isLoopback() || !networkInterface.isUp()) {
+                    continue;
+                }
+                byte[] mac = networkInterface.getHardwareAddress();
+                if (mac == null) {
+                    continue;
+                }
+                // Conversion of the byte array into a readable string."
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < mac.length; i++) {
+                    sb.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? ":" : ""));
+                }
+                return sb.toString(); // Returns the MAC address of the first matching interface.
+            }
+        } catch (SocketException e) {
+            // e.printStackTrace();
+            return null;
+        }
+        return null;
     }
 
 }

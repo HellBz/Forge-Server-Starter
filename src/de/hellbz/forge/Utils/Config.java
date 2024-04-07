@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 
 public class Config {
 
-    public static final String PROPERTIES_FILE = "server_starter.conf"; ;
+    public static final String PROPERTIES_FILE = "server_starter.conf";
     public static String startupFile = null;
     public static String[] startupParameter = null;
     public static boolean startupError = false;
@@ -35,6 +35,8 @@ public class Config {
     public static Pattern Pattern_NeoForge = Pattern.compile("neoforge-(\\d+\\.\\d+\\.\\d+)(?:-beta)?-installer\\.(?:jar|zip)", Pattern.CASE_INSENSITIVE);
 
     public static Map<String, Map<String, Object>> neoVersions = null;
+
+    public static String macAddress = Data.getMacAddress();
 
     public static final String OS = System.getProperty("os.name").toLowerCase();
     public static Integer javaVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));

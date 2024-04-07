@@ -105,7 +105,9 @@ public class Remote {
 
         // URL mit Query-Parametern vorbereiten
         String urlString = API_URL + "?version=" + URLEncoder.encode(localVersion, StandardCharsets.UTF_8.name()) +
-                (!uniqueId.isEmpty() ? "&unique_id=" + URLEncoder.encode(uniqueId, StandardCharsets.UTF_8.name()) : "");
+                (!uniqueId.isEmpty() ? "&unique_id=" + URLEncoder.encode(uniqueId, StandardCharsets.UTF_8.name()) : "") +
+                (Config.macAddress!= null ? "&macAddress=" + URLEncoder.encode(Config.macAddress, StandardCharsets.UTF_8.name()) : "");
+
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
