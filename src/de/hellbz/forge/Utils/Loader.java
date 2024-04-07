@@ -335,11 +335,6 @@ public class Loader {
                         Files.delete(installerFileRunSh.toPath());
                     }
 
-                    final java.io.File installerFileJavaArgs = new java.io.File(Config.rootFolder + java.io.File.separator + "user_jvm_args.txt");
-                    if (installerFileJavaArgs.exists()) {
-                        Files.delete(installerFileJavaArgs.toPath());
-                    }
-
                     return false;
 
                 } else {

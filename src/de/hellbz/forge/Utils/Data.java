@@ -355,7 +355,7 @@ public class Data {
         // properties.forEach((k, v) -> LogDebug(k + ":" + v));
 
         List<String> relevantProperties = Arrays.asList(
-                "java.version", "java.runtime.version", "java.vm.version",
+                "java.home", "java.version", "java.runtime.version", "java.vm.version",
                 "java.vm.name", "java.vm.vendor", "os.name", "os.arch",
                 "os.version", "file.separator", "path.separator", "user.name",
                 "user.dir", "user.home", "java.class.path", "java.vm.specification.version",

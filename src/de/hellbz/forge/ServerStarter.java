@@ -114,31 +114,39 @@ public class ServerStarter {
 
                 List<String> where = new ArrayList<>();
                 String javaPath = Config.configProps.getProperty("java_path");
-                String timezone = Config.configProps.getProperty("timezone");
+                String timezone = Config.configProps.getProperty("timezone", "UTC");
 
                 if (javaPath != null && !javaPath.equals("java")) {
                     where.add(javaPath);
                     LogDebug("Use Custom Java Path: " + javaPath);
                 } else {
-                    where.add("java");
+                    where.add( System.getProperty("java.home") + File.separator + "bin" + File.separator + "java" );
                     LogDebug("Use Standard Java Path");
                 }
 
-                Collections.addAll(where, Config.startupParameter);
-
-                if (timezone != null) {
-                    where.add("-Duser.timezone=" + timezone);
+                if (timezone != null && !timezone.isEmpty()) {
+                    // Die Property existiert und ist nicht leer. Jetzt kannst du weiter prüfen.
+                    if (!timezone.equals("UTC")) {
+                        where.add("-Duser.timezone=" + timezone);
+                    }
                 }
-
-                Comparator<String> versionComparator = new VersionComparator();
 
                 LogDebug( Config.startupFile );
 
                 if (Config.startupFile.endsWith(".jar")) {
                     where.add("-jar");
+                    Collections.addAll(where, Config.startupParameter);
                     where.add(Config.startupFile);
                 } else {
-                    where.add("@" + Config.startupFile);
+
+                    File installerFileJavaArgs = new java.io.File(Config.rootFolder + java.io.File.separator + "user_jvm_args.txt");
+                    if (installerFileJavaArgs.exists()) {
+                        where.add("@user_jvm_args.txt");
+                    }else {
+                        Collections.addAll(where, Config.startupParameter);
+                    }
+
+                    where.add("@" + System.getProperty("user.dir") + File.separator + Config.startupFile);
 
                     if (Config.javaVersion < 60) {
                         LogWarning("The Java-Class-Version is with \"" + Config.javaVersion + "\" too low to start the Server!");

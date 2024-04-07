@@ -38,7 +38,6 @@ public class Config {
 
     public static final String OS = System.getProperty("os.name").toLowerCase();
     public static Integer javaVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));
-
     public static String fileStartLnxFileString =   "java -jar " + Document.getJarFileName() + " -Xmx1024M -Xms1024M nogui";
     public static String fileStartWinFileString =   "@echo off\n" +
                                                     fileStartLnxFileString + "\n" +
@@ -49,7 +48,6 @@ public class Config {
                                                     "pause\n";
 
     static {
-        // System.out.println("Config loaded.");
 
         try {
             initServerConfig();
@@ -57,9 +55,14 @@ public class Config {
             throw new RuntimeException(e);
         }
 
+        String timezone = Config.configProps.getProperty("timezone", "UTC");
+
         //Set local Timezone
-        if (!Config.configProps.getProperty("timezone").equals("UTC")) {
-            System.setProperty("user.timezone", Config.configProps.getProperty("timezone"));
+        if (timezone != null && !timezone.isEmpty()) {
+            // Die Property existiert und ist nicht leer. Jetzt kannst du weiter prüfen.
+            if (!timezone.equals("UTC")) {
+                System.setProperty("user.timezone", timezone );
+            }
         }
 
     }
