@@ -1,5 +1,8 @@
 package de.hellbz.forge.Utils;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -94,11 +97,41 @@ public class Remote {
         String uniqueId = Config.configProps.getProperty("unique_id", "" );
 
         String response = sendApiRequest(localVersion, uniqueId);
-        String newUniqueId = Data.getJsonValue( response, "data/unique_id" );
 
-        if (!newUniqueId.equals(uniqueId)) {
-            Data.updateProperty( Config.PROPERTIES_FILE , "unique_id", newUniqueId);
+        Data.LogDebug( "API-UniqueID-Response: " + response );
+
+        try {
+            JSONObject jsonResponse = new JSONObject(response);
+            String newUniqueId = null;
+
+            // Check if the "data" object is present and not null.
+            if (jsonResponse.has("data") && !jsonResponse.isNull("data")) {
+                JSONObject dataObject = jsonResponse.getJSONObject("data");
+                // Ensure that "unique_id" is present before accessing it.
+                if (dataObject.has("unique_id") && !dataObject.isNull("unique_id")) {
+                    newUniqueId = dataObject.getString("unique_id");
+                }
+            }
+
+            // Check if newUniqueId is not null and differs from uniqueId before calling updateProperty.
+            if (newUniqueId != null && !newUniqueId.equals(uniqueId)) {
+                Data.updateProperty(Config.PROPERTIES_FILE, "unique_id", newUniqueId);
+            }
+
+            if (jsonResponse.has("error") && !jsonResponse.isNull("error") && jsonResponse.has("message") && !jsonResponse.isNull("message")) {
+
+                if ( jsonResponse.getBoolean("error") ) {
+                    Data.LogDebug("API-UniqueID, " + Data.RED_BOLD + jsonResponse.getString("message") + Data.TXT_RESET );
+                }
+            }
+
+        } catch (JSONException e) {
+            System.err.println("Fehler beim Parsen der JSON-Antwort: " + e.getMessage());
         }
+
+
+
+
     }
 
     private static String sendApiRequest(String localVersion, String uniqueId) throws IOException {
