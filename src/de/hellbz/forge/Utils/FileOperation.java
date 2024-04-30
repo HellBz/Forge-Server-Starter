@@ -6,7 +6,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 
 public class FileOperation {
 
@@ -93,19 +93,44 @@ public class FileOperation {
         }
     }
 
+    /**
+     * Downloads or reads a file with optional cache support.
+     *
+     * @param source URL or file path
+     * @param destinationPath Local path to save or check the file
+     * @param maxAge Optional maximum age of the file cache in milliseconds, if 0 caching is not used
+     * @return FileOperation object with status and content or error info
+     */
+    public static FileOperation downloadOrReadFile(String source, String destinationPath, long maxAge) {
+        if (maxAge > 0) {
+            File file = new File(destinationPath);
+            if (file.exists() && (System.currentTimeMillis() - file.lastModified() < maxAge)) {
+                // Read from cache if the file is still valid
+                return downloadOrReadFile(file);
+            }
+        }
+        // Download and cache if the file does not exist, is outdated, or if caching is not used
+        return downloadOrReadFile(source, destinationPath);
+    }
+
     // Hilfsmethode zum Lesen des Dateiinhalts
     private static FileOperation readFileContent(InputStream in, String destinationPath) throws IOException {
+        // Puffer für das Lesen der Daten
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+        StringBuilder content = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            content.append(line).append("\n");
+        }
+
+        // Wenn ein Ziel angegeben wurde, speichern wir den Inhalt
         if (destinationPath != null && !destinationPath.isEmpty()) {
-            Files.copy(in, Paths.get(destinationPath), StandardCopyOption.REPLACE_EXISTING);
-            return new FileOperation(200, "Datei erfolgreich gespeichert", true);
+            Files.write(Paths.get(destinationPath), content.toString().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            // Inhalt bleibt in content und zusätzliche Informationen über den Speicherstatus in additionalData
+            return new FileOperation(200, content.toString(), "File downloaded and saved");
         } else {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            StringBuilder content = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                content.append(line).append("\n");
-            }
-            return new FileOperation(200, content.toString(), null);
+            // Keine zusätzlichen Daten benötigt, da keine Speicheraktion erfolgt
+            return new FileOperation(200, content.toString(), "Read File from Cache");
         }
     }
 
@@ -133,13 +158,23 @@ public class FileOperation {
         }
 
         // Testen des Speicherns und Lesens von Remote-Dateien
-        FileOperation remoteSaveReadResult = downloadOrReadFile("https://mediafilez.forgecdn.net/files/5113/957/Server-Files-0.2.48.zip", "Server-Files-0.2.48.zip");
+        FileOperation remoteSaveReadResult = downloadOrReadFile("https://api.curseforge.com/v1/minecraft/modloader/", "ModLoader.json");
         if (remoteSaveReadResult.getResponseCode() == 200) {
-            System.out.println("Remote-Dateiinhalt (gespeichert): " + remoteSaveReadResult.getContent());
+            //System.out.println("Remote-Dateiinhalt (gespeichert): " + remoteSaveReadResult.getContent());
             System.out.println("Datei erfolgreich gespeichert: " + remoteSaveReadResult.getAdditionalData());
         } else {
             System.out.println("Fehler beim Lesen der Remote-Datei. Response-Code: " + remoteSaveReadResult.getResponseCode());
             System.out.println("Zusätzliche Informationen: " + remoteSaveReadResult.getAdditionalData());
+        }
+
+        // Testen des Speicherns und Lesens von Remote-Dateien mit caching file
+        FileOperation remoteSaveReadResultCache = downloadOrReadFile("https://api.curseforge.com/v1/minecraft/modloader/", "ModLoaderCahce.json", 60000 );
+        if (remoteSaveReadResult.getResponseCode() == 200) {
+            //System.out.println("Remote-Dateiinhalt (gespeichert): " + remoteSaveReadResultCache.getContent());
+            System.out.println("Datei erfolgreich gespeichert: " + remoteSaveReadResultCache.getAdditionalData());
+        } else {
+            System.out.println("Fehler beim Lesen der Remote-Datei. Response-Code: " + remoteSaveReadResultCache.getResponseCode());
+            System.out.println("Zusätzliche Informationen: " + remoteSaveReadResultCache.getAdditionalData());
         }
     }
 }
