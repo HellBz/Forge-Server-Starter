@@ -1,0 +1,100 @@
+name: Attach ZIP with start scripts to release
+
+on:
+  release:
+    types: [published]  # Run when a release is published
+
+permissions:
+  contents: write  # Needed to upload assets to the release
+
+jobs:
+  package-and-attach:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the tagged commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          # lfs: true  # Uncomment if the JAR is stored with Git LFS
+
+      - name: Prepare artifacts (version, scripts, zip)
+        id: prep
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # --- Derive version from tag (strip leading "v") ---
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+
+          SRC_JAR="out/compiled/minecraft_server.jar"
+          if [ ! -f "$SRC_JAR" ]; then
+            echo "::error file=$SRC_JAR::JAR not found at $SRC_JAR"
+            exit 1
+          fi
+
+          # --- Staging folder for the ZIP contents ---
+          STAGE="release_bundle"
+          mkdir -p "$STAGE"
+
+          # Copy JAR to versioned name
+          DEST_JAR="$STAGE/minecraft_server-${VERSION}.jar"
+          cp "$SRC_JAR" "$DEST_JAR"
+
+          # --- Create start scripts (Windows .bat and Unix .sh) ---
+          # start.sh (Unix)
+          cat > "$STAGE/start.sh" << 'SH'
+          #!/usr/bin/env bash
+          # Starts the Minecraft server JAR in this folder.
+          # You may pass JAVA_OPTS (e.g., -Xms1G -Xmx2G). JAVA_CMD defaults to "java".
+          set -euo pipefail
+          DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+          : "${JAVA_CMD:=java}"
+          : "${JAVA_OPTS:=-Xms1G -Xmx2G}"
+          exec "$JAVA_CMD" $JAVA_OPTS -jar "$DIR/REPLACE_JAR" nogui
+          SH
+          chmod +x "$STAGE/start.sh"
+          sed -i "s|REPLACE_JAR|minecraft_server-${VERSION}.jar|g" "$STAGE/start.sh"
+
+          # start.bat (Windows)
+          cat > "$STAGE/start.bat" << 'BAT'
+          @echo off
+          REM Starts the Minecraft server JAR in this folder.
+          REM You may set JAVA_OPTS (e.g., -Xms1G -Xmx2G). JAVA_CMD defaults to "java".
+          setlocal
+          if "%JAVA_CMD%"=="" set "JAVA_CMD=java"
+          if "%JAVA_OPTS%"=="" set "JAVA_OPTS=-Xms1G -Xmx2G"
+          set "SCRIPT_DIR=%~dp0"
+          "%JAVA_CMD%" %JAVA_OPTS% -jar "%SCRIPT_DIR%REPLACE_JAR" nogui
+          endlocal
+          BAT
+          sed -i "s|REPLACE_JAR|minecraft_server-${VERSION}.jar|g" "$STAGE/start.bat"
+
+          # Optional README
+          cat > "$STAGE/README.txt" <<TXT
+          How to run:
+          - Windows: double-click start.bat (or run in a terminal).
+          - Linux/macOS: run "chmod +x start.sh" (first time) and then "./start.sh".
+          You can override memory via JAVA_OPTS, e.g.: JAVA_OPTS="-Xms2G -Xmx4G".
+          TXT
+
+          # --- SHA256 checksums (handy for integrity) ---
+          (cd "$STAGE" && sha256sum * > SHA256SUMS.txt)
+
+          # --- Build the ZIP ---
+          ZIP_NAME="minecraft_server-${VERSION}.zip"
+          zip -r "$ZIP_NAME" "$STAGE" >/dev/null
+
+          # Expose outputs
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "zip=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "jar=$DEST_JAR" >> "$GITHUB_OUTPUT"
+
+      - name: Upload ZIP (and versioned JAR) to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ steps.prep.outputs.zip }}
+            ${{ steps.prep.outputs.jar }}  # remove this line if you only want the ZIP
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
