@@ -35,16 +35,33 @@ public class NeoForge {
 
                     for (int i = 0; i < versionsArray.length(); i++) {
                         String version = versionsArray.getString(i);
+                        String[] parts = version.split("\\.");
 
-                        String mcVersion = version.split("\\.")[0] + "." + version.split("\\.")[1];
-                        //String neoVersion = version.replace(mcVersion + ".", "");
+                        // NeoForge versioning:
+                        // Old (MC 1.x era, NeoForge major < 26):
+                        //   3 segments: <mcMinor>.<mcPatch>.<nfBuild>  e.g. 21.1.3 -> MC 1.21.1
+                        // New (MC 26+ era, NeoForge major >= 26):
+                        //   4 segments: <mcMajor>.<mcMinor>.<mcPatch>.<nfBuild>  e.g. 26.1.2.2-beta -> MC 26.1.2
+                        // See: https://neoforged.net/news/26.1release/
+                        int neoMajorInt = 0;
+                        try { neoMajorInt = Integer.parseInt(parts[0]); } catch (NumberFormatException ignored) {}
 
-                        Map<String, Object> versionInfo = NeoVersions.getOrDefault("1." + mcVersion, new HashMap<>());
+                        String mcKey;
+                        if (neoMajorInt < 26) {
+                            // Old scheme: first two segments = MC minor + patch -> key "1.major.minor"
+                            String neoMajor = parts[0];
+                            String neoMinor = parts.length > 1 ? parts[1] : "0";
+                            mcKey = "1." + neoMajor + "." + neoMinor;
+                        } else {
+                            // New scheme: first three segments = full MC version -> key "major.minor.patch"
+                            String p0 = parts[0];
+                            String p1 = parts.length > 1 ? parts[1] : "0";
+                            String p2 = parts.length > 2 ? parts[2] : "0";
+                            mcKey = p0 + "." + p1 + "." + p2;
+                        }
 
-                        // Hol dir das JSON-Array der Versionen aus der Map oder erstelle eine neue Liste
-                        //List<String> versionsList = (List<String>) versionInfo.getOrDefault("versions", new ArrayList<>());
+                        Map<String, Object> versionInfo = NeoVersions.getOrDefault(mcKey, new HashMap<>());
 
-                        // Sicherstellen, dass wir eine List<String> aus der Map extrahieren
                         Object versionsObject = versionInfo.getOrDefault("versions", new ArrayList<String>());
                         List<String> versionsList = new ArrayList<>();
 
@@ -53,28 +70,20 @@ public class NeoForge {
                                 if (item instanceof String) {
                                     versionsList.add((String) item);
                                 } else {
-                                    // Optional: Fehlerbehandlung, wenn ein Element kein String ist
-                                    Data.LogDebug("An element was not a String, has been skipped: " + item );
+                                    Data.LogDebug("An element was not a String, has been skipped: " + item);
                                 }
                             }
                         }
 
-                        // Füge die NeoForge-Version hinzu
                         versionsList.add(version);
-
-                        // Kehre die Reihenfolge der Liste um
                         Collections.reverse(versionsList);
-
-                        // Speichere das JSON-Array wieder in der Map
                         versionInfo.put("versions", versionsList);
 
-                        if (!NeoVersions.containsKey("1." + mcVersion) ||
-                                versionComparator.compare(version, (String) NeoVersions.get("1." + mcVersion).get("latest")) > 0) {
-                            //NeoVersions.put("1." + mcVersion, neoVersion);
+                        if (!NeoVersions.containsKey(mcKey) ||
+                                versionComparator.compare(version, (String) NeoVersions.get(mcKey).get("latest")) > 0) {
                             versionInfo.put("latest", version);
-                            //System.out.println("Debug: Highest Neo-Version for " + mcVersion + ": " + neoVersion);
                         }
-                        NeoVersions.put("1." + mcVersion, versionInfo);
+                        NeoVersions.put(mcKey, versionInfo);
                     }
 
                     return NeoVersions;

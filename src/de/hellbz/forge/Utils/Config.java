@@ -22,7 +22,6 @@ public class Config {
     public static String minecraftVersion = null;
     public static String loaderVersion = null;
 
-    //Set Library-Path's
     public static java.io.File rootFolder = new java.io.File("./");
     public static java.io.File librariesFolder = new java.io.File(rootFolder, "libraries");
 
@@ -32,25 +31,38 @@ public class Config {
     public static Map<String, Map<String, Object>> forgeVersions = null;
 
     public static java.io.File neoForgeFolder = new java.io.File(librariesFolder, "net/neoforged/neoforge");
-    public static Pattern Pattern_NeoForge = Pattern.compile("neoforge-(\\d+\\.\\d+\\.\\d+)(?:-beta)?-installer\\.(?:jar|zip)", Pattern.CASE_INSENSITIVE);
+    public static Pattern Pattern_NeoForge = Pattern.compile("neoforge-([\\d]+(?:\\.[\\d]+)+)(?:-[a-zA-Z]+\\d*)?-installer\\.(?:jar|zip)", Pattern.CASE_INSENSITIVE);
 
     public static Map<String, Map<String, Object>> neoVersions = null;
 
     public static String macAddress = Data.getMacAddress();
 
     public static final String OS = System.getProperty("os.name").toLowerCase();
+
+    /**
+     * Java class version mapping:
+     * Java 8  = 52, Java 11 = 55, Java 17 = 61,
+     * Java 21 = 65, Java 24 = 68, Java 25 = 69
+     * We parse as double and cast to int to support future versions correctly.
+     */
     public static Integer javaVersion = (int) Double.parseDouble(System.getProperty("java.class.version"));
-    public static String fileStartLnxFileString =   "java -jar " + Document.getJarFileName() + " -Xmx1024M -Xms1024M nogui";
-    public static String fileStartWinFileString =   "@echo off\n" +
-                                                    fileStartLnxFileString + "\n" +
-                                                    "pause\n";
-    public static String fileAutoLnxFileString =    "java -jar " + Document.getJarFileName() + " -autoFile nogui";
-    public static String fileAutoWinFileString =    "@echo off\n" +
-                                                    fileAutoLnxFileString + "\n" +
-                                                    "pause\n";
+
+    /**
+     * Exit code that triggers a restart loop in ServerStarter.
+     * Servers can be configured to exit with this code to signal restart.
+     */
+    public static final int RESTART_EXIT_CODE = 3;
+
+    public static String fileStartLnxFileString = "java -jar " + Document.getJarFileName() + " -Xmx1024M -Xms1024M nogui";
+    public static String fileStartWinFileString = "@echo off\n" +
+            fileStartLnxFileString + "\n" +
+            "pause\n";
+    public static String fileAutoLnxFileString = "java -jar " + Document.getJarFileName() + " -autoFile nogui";
+    public static String fileAutoWinFileString = "@echo off\n" +
+            fileAutoLnxFileString + "\n" +
+            "pause\n";
 
     static {
-
         try {
             initServerConfig();
         } catch (IOException e) {
@@ -59,28 +71,24 @@ public class Config {
 
         String timezone = Config.configProps.getProperty("timezone", "UTC");
 
-        //Set local Timezone
         if (timezone != null && !timezone.isEmpty()) {
-            // Die Property existiert und ist nicht leer. Jetzt kannst du weiter prüfen.
             if (!timezone.equals("UTC")) {
-                System.setProperty("user.timezone", timezone );
+                System.setProperty("user.timezone", timezone);
             }
         }
-
     }
 
     public static void initServerConfig() throws IOException {
 
         java.io.File configFile = new java.io.File(Config.PROPERTIES_FILE);
 
-        if ( !configFile.exists()) {
+        if (!configFile.exists()) {
             FileOperation.downloadOrReadFile("/res/server_starter.conf", Config.rootFolder + File.separator + Config.PROPERTIES_FILE);
         }
 
-            FileReader configReader = new FileReader(configFile);
-            Config.configProps = new Properties();
-            Config.configProps.load(configReader);
-            configReader.close();
+        FileReader configReader = new FileReader(configFile);
+        Config.configProps = new Properties();
+        Config.configProps.load(configReader);
+        configReader.close();
     }
-
 }

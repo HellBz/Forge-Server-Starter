@@ -3,10 +3,7 @@ package de.hellbz.forge.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -22,137 +19,161 @@ public class Remote {
 
     public static void checkForUpdate() {
 
-        String localVersionPath = "/res/modInfo.json"; // Lokaler Pfad zur XML-Datei im Ressourcenordner
-        String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/master" + localVersionPath; // Remote-URL zur XML-Datei auf GitHub
+        String localVersionPath = "/res/modInfo.json";
+        // Use raw GitHub URL which returns plain JSON (no HTML wrapper, no bot blocking)
+        String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/HEAD/res/modInfo.json";
 
-        String localVersion = Data.getJsonValue( (String) FileOperation.downloadOrReadFile(localVersionPath).getContent() , "version" );
+        String localVersion = Data.getJsonValue((String) FileOperation.downloadOrReadFile(localVersionPath).getContent(), "version");
 
-        if ( Config.configProps.getProperty("unique_id_request","true" ).equals("true") ){
+        if (Config.configProps.getProperty("unique_id_request", "true").equals("true")) {
             try {
                 requestUniqueID(localVersion);
             } catch (IOException e) {
-                Data.LogDebug("An Error Occurs, while calling API : " + e );
+                Data.LogDebug("An Error Occurs, while calling API: " + e);
             }
         }
 
         FileOperation remoteContent = FileOperation.downloadOrReadFile(remoteVersionUrl);
         String remoteVersion = null;
         if (remoteContent.getResponseCode() == 200) {
-            remoteVersion = Data.getJsonValue( (String) remoteContent.getContent(), "version");
+            remoteVersion = Data.getJsonValue((String) remoteContent.getContent(), "version");
+        } else {
+            Data.LogDebug("Could not fetch remote version (HTTP " + remoteContent.getResponseCode() + "), skipping update check.");
         }
+
         if ((remoteVersion != null || localVersion != null) && Net.isConnected) {
             Data.LogDebug("Local version: " + localVersion);
             Data.LogDebug("Remote version: " + remoteVersion);
-            //localVersion = "1.0"; //Just for DEBUG purposes
-            // Vergleich der Versionen mit der benutzerdefinierten Vergleichsfunktion
+
             Data.VersionComparator versionComparator = new Data.VersionComparator();
-            String committedDate = getGitHubCommittedDate("https://github.com/HellBz/Forge-Server-Starter/commits/master/res/modInfo.json");
-            if (versionComparator.compare(localVersion, remoteVersion) < 0) {
+            // Get commit date via GitHub API instead of scraping HTML page
+            String committedDate = getGitHubCommittedDateViaApi();
+
+            if (remoteVersion != null && versionComparator.compare(localVersion, remoteVersion) < 0) {
                 Data.LogWarning("----------------------------------------------------------------");
-                Data.LogWarning(Data.CYAN_BRIGHT + "Update is available" + Data.TXT_RESET + ", New Version: " + Data.GREEN_BRIGHT + remoteVersion + Data.TXT_RESET + ", Your local Version is. " + Data.RED_BOLD + localVersion + " " + Data.TXT_RESET);
-                Data.LogWarning("Latest Update if from: " + committedDate + " on GitHub.");
+                Data.LogWarning(Data.CYAN_BRIGHT + "Update is available" + Data.TXT_RESET
+                        + ", New Version: " + Data.GREEN_BRIGHT + remoteVersion + Data.TXT_RESET
+                        + ", Your local Version is: " + Data.RED_BOLD + localVersion + " " + Data.TXT_RESET);
+                if (committedDate != null) {
+                    Data.LogWarning("Latest Update is from: " + committedDate + " on GitHub.");
+                }
                 Data.LogWarning("You find the newest Versions there:");
                 Data.LogWarning("https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
                 Data.LogWarning("----------------------------------------------------------------");
             } else {
                 Data.LogInfo("----------------------------------------------------------------");
-                Data.LogInfo("You have the latest version of F-S-S, with: " + Data.GREEN_BRIGHT + remoteVersion + Data.TXT_RESET);
-                Data.LogInfo("Latest Update if from: " + committedDate + " on GitHub.");
+                Data.LogInfo("You have the latest version of F-S-S, with: " + Data.GREEN_BRIGHT + (remoteVersion != null ? remoteVersion : localVersion) + Data.TXT_RESET);
+                if (committedDate != null) {
+                    Data.LogInfo("Latest Update is from: " + committedDate + " on GitHub.");
+                }
                 Data.LogInfo("You find all Versions there:");
                 Data.LogInfo("https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
                 Data.LogInfo("----------------------------------------------------------------");
             }
         }
-
     }
-    public static String getGitHubCommittedDate(String url) {
-        String committedDate = null;
-        if ( Net.isConnected ) {
-            FileOperation remoteReadResult = downloadOrReadFile(url);
-            if (remoteReadResult.getResponseCode() == 200) {
 
-                // Regulärer Ausdruck, um "committedDate" zu finden und zu extrahieren
-                Pattern pattern = Pattern.compile("\"committedDate\":\"(.*?)\"");
-                Matcher matcher = pattern.matcher(remoteReadResult.getContent().toString());
-
-                // Wenn das "committedDate" gefunden wird
+    /**
+     * Gets the last commit date for the modInfo.json file via the GitHub REST API.
+     * This is more reliable than scraping the HTML commits page (which returned HTTP 500).
+     */
+    private static String getGitHubCommittedDateViaApi() {
+        if (!Net.isConnected) return null;
+        try {
+            String apiUrl = "https://api.github.com/repos/HellBz/Forge-Server-Starter/commits?path=res/modInfo.json&per_page=1";
+            FileOperation result = downloadOrReadFile(apiUrl);
+            if (result.getResponseCode() == 200 && result.getContent() != null) {
+                // Extract date from JSON array: [{"commit":{"author":{"date":"..."}}}]
+                String content = result.getContent().toString();
+                Pattern pattern = Pattern.compile("\"date\"\\s*:\\s*\"([^\"]+)\"");
+                Matcher matcher = pattern.matcher(content);
                 if (matcher.find()) {
-                    committedDate = matcher.group(1);
-                    //System.out.println("Committed Date: " + committedDate);
-
-
-                } /* else {
-                    //System.out.println("Committed Date nicht gefunden.");
-                } */
-
-            } /* else {
-                //System.out.println("Fehler beim Lesen der Remote-Datei. Response-Code: " + remoteReadResult.getResponseCode());
-                //System.out.println("Zusätzliche Informationen: " + remoteReadResult.getAdditionalData());
-            } */
+                    return matcher.group(1);
+                }
+            }
+        } catch (Exception e) {
+            Data.LogDebug("Could not fetch commit date: " + e.getMessage());
         }
-        return committedDate;
+        return null;
     }
+
+    /**
+     * @deprecated Use getGitHubCommittedDateViaApi() instead.
+     * This method scraped the GitHub HTML commits page which frequently returns HTTP 500.
+     */
+    @Deprecated
+    public static String getGitHubCommittedDate(String url) {
+        if (!Net.isConnected) return null;
+        FileOperation remoteReadResult = downloadOrReadFile(url);
+        if (remoteReadResult.getResponseCode() == 200) {
+            Pattern pattern = Pattern.compile("\"committedDate\":\"(.*?)\"");
+            Matcher matcher = pattern.matcher(remoteReadResult.getContent().toString());
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        }
+        return null;
+    }
+
     public static void requestUniqueID(String localVersion) throws IOException {
 
-        String uniqueId = Config.configProps.getProperty("unique_id", "" );
+        String uniqueId = Config.configProps.getProperty("unique_id", "");
 
-        String response = sendApiRequest(localVersion, uniqueId);
+        String response;
+        try {
+            response = sendApiRequest(localVersion, uniqueId);
+        } catch (IOException e) {
+            Data.LogDebug("UniqueID API request failed: " + e.getMessage());
+            return;
+        }
 
-        Data.LogDebug( "API-UniqueID-Response: " + response );
+        Data.LogDebug("API-UniqueID-Response: " + response);
 
         try {
             JSONObject jsonResponse = new JSONObject(response);
             String newUniqueId = null;
 
-            // Check if the "data" object is present and not null.
             if (jsonResponse.has("data") && !jsonResponse.isNull("data")) {
                 JSONObject dataObject = jsonResponse.getJSONObject("data");
-                // Ensure that "unique_id" is present before accessing it.
                 if (dataObject.has("unique_id") && !dataObject.isNull("unique_id")) {
                     newUniqueId = dataObject.getString("unique_id");
                 }
             }
 
-            // Check if newUniqueId is not null and differs from uniqueId before calling updateProperty.
             if (newUniqueId != null && !newUniqueId.equals(uniqueId)) {
                 Data.updateProperty(Config.PROPERTIES_FILE, "unique_id", newUniqueId);
             }
 
-            if (jsonResponse.has("error") && !jsonResponse.isNull("error") && jsonResponse.has("message") && !jsonResponse.isNull("message")) {
-
-                if ( jsonResponse.getBoolean("error") ) {
-                    Data.LogDebug("API-UniqueID, " + Data.RED_BOLD + jsonResponse.getString("message") + Data.TXT_RESET );
+            if (jsonResponse.has("error") && !jsonResponse.isNull("error")
+                    && jsonResponse.has("message") && !jsonResponse.isNull("message")) {
+                if (jsonResponse.getBoolean("error")) {
+                    Data.LogDebug("API-UniqueID, " + Data.RED_BOLD + jsonResponse.getString("message") + Data.TXT_RESET);
                 }
             }
 
         } catch (JSONException e) {
-            System.err.println("Fehler beim Parsen der JSON-Antwort: " + e.getMessage());
+            Data.LogDebug("Error parsing UniqueID JSON response: " + e.getMessage());
         }
-
-
-
-
     }
 
     private static String sendApiRequest(String localVersion, String uniqueId) throws IOException {
 
-        // URL mit Query-Parametern vorbereiten
-        String urlString = API_URL + "?version=" + URLEncoder.encode(localVersion, StandardCharsets.UTF_8.name()) +
-                (!uniqueId.isEmpty() ? "&unique_id=" + URLEncoder.encode(uniqueId, StandardCharsets.UTF_8.name()) : "") +
-                (Config.macAddress!= null ? "&macAddress=" + URLEncoder.encode(Config.macAddress, StandardCharsets.UTF_8.name()) : "");
+        String urlString = API_URL
+                + "?version=" + URLEncoder.encode(localVersion != null ? localVersion : "", StandardCharsets.UTF_8.name())
+                + (!uniqueId.isEmpty() ? "&unique_id=" + URLEncoder.encode(uniqueId, StandardCharsets.UTF_8.name()) : "")
+                + (Config.macAddress != null ? "&macAddress=" + URLEncoder.encode(Config.macAddress, StandardCharsets.UTF_8.name()) : "");
 
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        // POST-Anfrage konfigurieren
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        connection.setRequestProperty("User-Agent", "Forge-Server-Starter/3.6 (Java/" + System.getProperty("java.version") + ")");
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
 
-        // Properties-Datei-Inhalt in einen String umwandeln
         String propertiesToPostData = Data.propertiesToURL("server.properties");
-        if ( propertiesToPostData != null ) {
+        if (propertiesToPostData != null) {
             connection.setDoOutput(true);
-            // Properties-Datei-Inhalt in den Request-Body schreiben
             try (OutputStream os = connection.getOutputStream()) {
                 byte[] input = propertiesToPostData.getBytes(StandardCharsets.UTF_8);
                 os.write(input, 0, input.length);
