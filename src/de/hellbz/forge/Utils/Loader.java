@@ -174,7 +174,7 @@ public class Loader {
                 String latestNeo = (String) Config.neoVersions.get(Config.minecraftVersion).get("latest");
                 LogInfo("Which NeoFORGED-Version you like to install [ Latest: " + latestNeo + " ]:");
                 LogInfo("You can type 'latest' or a specific version number.");
-                LogInfo("You can also install all other Versions, listed on this Site: https://projects.neoforged.net/neoforged/neoforge");
+                LogInfo("You can also install all other Versions, listed on this Site: https://neoforged.net/");
             }
 
             loaderVersionInput = in.nextLine().trim();
@@ -444,8 +444,10 @@ public class Loader {
                 Matcher matcher = Config.Pattern_Forge_startfile.matcher(matchingFile.getName());
 
                 if (matcher.matches()) {
-                    Config.minecraftVersion = matcher.group(1);
-                    Config.loaderVersion = matcher.group(2);
+                    // group(1) = prefix ("forge-" or "minecraftforge-universal-")
+                    // group(2) = MC version, group(3) = Forge version
+                    Config.minecraftVersion = matcher.group(2);
+                    Config.loaderVersion = matcher.group(3);
                     Config.startupFile = matchingFile.getName();
                     LogInfo("Found Minecraft: " + Config.minecraftVersion + " with Forge " + Config.loaderVersion);
                     return;
