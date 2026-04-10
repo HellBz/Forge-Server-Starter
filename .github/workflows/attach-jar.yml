@@ -1,52 +1,98 @@
-name: Attach ZIP with start scripts to release
+name: Build and attach JAR to release
 
 on:
   release:
     types: [published]  # Run when a release is published
+  push:
+    branches: [master]  # Also build on every push to master (for testing)
+  pull_request:
+    branches: [master]  # Build on PRs to master to verify compilation
 
 permissions:
   contents: write  # Needed to upload assets to the release
 
 jobs:
-  package-and-attach:
+  build-and-attach:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout the tagged commit
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-          # lfs: true  # Uncomment if the JAR is stored with Git LFS
 
-      - name: Prepare artifacts (version, scripts, zip)
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Compile Java sources
+        run: |
+          set -euo pipefail
+          mkdir -p build/classes
+
+          javac -encoding UTF-8 \
+            -cp "libs/json-20230618.jar:libs/jsoup-1.17.2.jar" \
+            -d build/classes \
+            $(find src -name "*.java")
+
+          echo "Compilation successful."
+
+      - name: Copy resources into build
+        run: |
+          set -euo pipefail
+          mkdir -p build/classes/res
+          cp res/server_starter.conf   build/classes/res/
+          cp res/forge-auto-install.txt build/classes/res/
+          cp res/modInfo.json          build/classes/res/
+
+      - name: Extract dependency JARs (fat JAR)
+        run: |
+          set -euo pipefail
+          cd build/classes
+          jar xf ../../libs/json-20230618.jar
+          jar xf ../../libs/jsoup-1.17.2.jar
+          # Remove dependency META-INF to avoid manifest conflicts
+          rm -rf META-INF
+          cd ../..
+
+      - name: Build fat JAR
+        run: |
+          set -euo pipefail
+          jar cfm build/minecraft_server.jar src/META-INF/MANIFEST.MF -C build/classes .
+          echo "JAR size: $(du -sh build/minecraft_server.jar | cut -f1)"
+
+      - name: Upload JAR as build artifact (always)
+        uses: actions/upload-artifact@v4
+        with:
+          name: minecraft_server
+          path: build/minecraft_server.jar
+          retention-days: 30
+
+      # --- Release-only steps below ---
+
+      - name: Prepare release bundle
+        if: github.event_name == 'release'
         id: prep
         shell: bash
         run: |
           set -euo pipefail
 
-          # --- Derive version from tag (strip leading "v") ---
           TAG="${{ github.event.release.tag_name }}"
           VERSION="${TAG#v}"
 
-          SRC_JAR="out/compiled/minecraft_server.jar"
-          if [ ! -f "$SRC_JAR" ]; then
-            echo "::error file=$SRC_JAR::JAR not found at $SRC_JAR"
-            exit 1
-          fi
-
-          # --- Staging folder for the ZIP contents ---
           STAGE="release_bundle"
           mkdir -p "$STAGE"
 
-          # Copy JAR to versioned name
           DEST_JAR="$STAGE/minecraft_server-${VERSION}.jar"
-          cp "$SRC_JAR" "$DEST_JAR"
+          cp build/minecraft_server.jar "$DEST_JAR"
 
-          # --- Create start scripts (Windows .bat and Unix .sh) ---
           # start.sh (Unix)
           cat > "$STAGE/start.sh" << 'SH'
           #!/usr/bin/env bash
-          # Starts the Minecraft server JAR in this folder.
-          # You may pass JAVA_OPTS (e.g., -Xms1G -Xmx2G). JAVA_CMD defaults to "java".
+          # Starts the Minecraft Forge Server Starter.
+          # Override memory via JAVA_OPTS, e.g.: JAVA_OPTS="-Xms2G -Xmx4G" ./start.sh
           set -euo pipefail
           DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
           : "${JAVA_CMD:=java}"
@@ -59,8 +105,8 @@ jobs:
           # start.bat (Windows)
           cat > "$STAGE/start.bat" << 'BAT'
           @echo off
-          REM Starts the Minecraft server JAR in this folder.
-          REM You may set JAVA_OPTS (e.g., -Xms1G -Xmx2G). JAVA_CMD defaults to "java".
+          REM Starts the Minecraft Forge Server Starter.
+          REM Override memory: set JAVA_OPTS=-Xms2G -Xmx4G
           setlocal
           if "%JAVA_CMD%"=="" set "JAVA_CMD=java"
           if "%JAVA_OPTS%"=="" set "JAVA_OPTS=-Xms1G -Xmx2G"
@@ -70,31 +116,32 @@ jobs:
           BAT
           sed -i "s|REPLACE_JAR|minecraft_server-${VERSION}.jar|g" "$STAGE/start.bat"
 
-          # Optional README
           cat > "$STAGE/README.txt" <<TXT
+          Forge Server Starter - ${VERSION}
+
           How to run:
           - Windows: double-click start.bat (or run in a terminal).
-          - Linux/macOS: run "chmod +x start.sh" (first time) and then "./start.sh".
-          You can override memory via JAVA_OPTS, e.g.: JAVA_OPTS="-Xms2G -Xmx4G".
+          - Linux/macOS: chmod +x start.sh  (first time), then ./start.sh
+
+          Override memory: set JAVA_OPTS=-Xms2G -Xmx4G before running.
           TXT
 
-          # --- SHA256 checksums (handy for integrity) ---
+          # SHA256 checksums
           (cd "$STAGE" && sha256sum * > SHA256SUMS.txt)
 
-          # --- Build the ZIP ---
           ZIP_NAME="minecraft_server-${VERSION}.zip"
           zip -r "$ZIP_NAME" "$STAGE" >/dev/null
 
-          # Expose outputs
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "zip=$ZIP_NAME" >> "$GITHUB_OUTPUT"
-          echo "jar=$DEST_JAR" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"    >> "$GITHUB_OUTPUT"
+          echo "zip=$ZIP_NAME"       >> "$GITHUB_OUTPUT"
+          echo "jar=$DEST_JAR"       >> "$GITHUB_OUTPUT"
 
-      - name: Upload ZIP (and versioned JAR) to the release
+      - name: Upload ZIP and JAR to release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ${{ steps.prep.outputs.zip }}
-            ${{ steps.prep.outputs.jar }}  # remove this line if you only want the ZIP
+            ${{ steps.prep.outputs.jar }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
