@@ -31,7 +31,7 @@ public class Config {
     public static Map<String, Map<String, Object>> forgeVersions = null;
 
     public static java.io.File neoForgeFolder = new java.io.File(librariesFolder, "net/neoforged/neoforge");
-    public static Pattern Pattern_NeoForge = Pattern.compile("neoforge-(\\d+\\.\\d+\\.\\d+)(?:-beta)?-installer\\.(?:jar|zip)", Pattern.CASE_INSENSITIVE);
+    public static Pattern Pattern_NeoForge = Pattern.compile("neoforge-([\\d]+(?:\\.[\\d]+)+)(?:-[a-zA-Z]+\\d*)?-installer\\.(?:jar|zip)", Pattern.CASE_INSENSITIVE);
 
     public static Map<String, Map<String, Object>> neoVersions = null;
 

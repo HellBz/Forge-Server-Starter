@@ -121,7 +121,7 @@ public class Loader {
             String ForgeVersionsAsString = String.join(", ", Config.forgeVersions.keySet());
             LogInfo(ForgeVersionsAsString);
 
-            LogInfo("NeoFORGED is available in the following Versions:");
+            LogInfo("NeoFORGED is available for the following Minecraft-Versions:");
             String NeoForgeVersionsAsString = String.join(", ", Config.neoVersions.keySet());
             LogInfo(NeoForgeVersionsAsString);
 
@@ -248,8 +248,14 @@ public class Loader {
                     return true;
                 }
                 if (matcherNeoForge.find()) {
-                    Config.minecraftVersion = "1." + matcherNeoForge.group(1);
-                    Config.loaderVersion = matcherNeoForge.group(1);
+                    String neoVer = matcherNeoForge.group(1); // e.g. "26.1.2.2" or "21.1.3"
+                    String[] parts = neoVer.split("\\.");
+                    // NeoForge version format: <mcMajor>.<mcMinor>.<build>[.<patch>]
+                    // MC version is "1.<major>.<minor>"
+                    String mcMajor = parts.length > 0 ? parts[0] : "0";
+                    String mcMinor = parts.length > 1 ? parts[1] : "0";
+                    Config.minecraftVersion = "1." + mcMajor + "." + mcMinor;
+                    Config.loaderVersion = neoVer;
                     Config.installerFile = currentFiles[i].getName();
                     if (output) LogInfo("Match found INSTALLER with MC-Version " + Config.minecraftVersion + " and NeoForge " + Config.loaderVersion);
                     return true;
