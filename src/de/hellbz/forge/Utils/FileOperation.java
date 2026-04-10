@@ -14,32 +14,26 @@ public class FileOperation {
     private final Object content;
     private final Object additionalData;
 
-    // Constructor
     public FileOperation(int responseCode, Object content, Object additionalData) {
         this.responseCode = responseCode;
         this.content = content;
         this.additionalData = additionalData;
     }
 
-    // Getter methods
-    public int getResponseCode() {
-        return responseCode;
-    }
-
-    public Object getContent() {
-        return content;
-    }
-
-    public Object getAdditionalData() {
-        return additionalData;
-    }
+    public int getResponseCode() { return responseCode; }
+    public Object getContent() { return content; }
+    public Object getAdditionalData() { return additionalData; }
 
     /**
-     * Calls a URL without waiting for a response.
-     *
-     * @param urlString The URL as a String.
-     * @return A FileOperation object with the status of the operation.
+     * Returns true if the given path/URL points to a binary file (JAR/ZIP)
+     * that must be saved as raw bytes and NOT decoded as text.
      */
+    private static boolean isBinaryPath(String path) {
+        if (path == null) return false;
+        String lower = path.toLowerCase();
+        return lower.endsWith(".jar") || lower.endsWith(".zip");
+    }
+
     public static FileOperation callUrlWithoutResponse(String urlString) {
         HttpURLConnection connection = null;
         try {
@@ -48,7 +42,6 @@ public class FileOperation {
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(5000);
             connection.connect();
-
             int responseCode = connection.getResponseCode();
             if (responseCode >= 200 && responseCode < 300) {
                 return new FileOperation(responseCode, "URL successfully called, response ignored.", null);
@@ -58,9 +51,7 @@ public class FileOperation {
         } catch (IOException e) {
             return new FileOperation(500, null, "URL call failed: " + e.getMessage());
         } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
+            if (connection != null) connection.disconnect();
         }
     }
 
@@ -70,7 +61,7 @@ public class FileOperation {
 
     public static FileOperation downloadOrReadFile(File source, String destinationPath) {
         try (InputStream in = Files.newInputStream(source.toPath())) {
-            return readFileContent(in, destinationPath);
+            return readContent(in, destinationPath, isBinaryPath(source.getName()));
         } catch (IOException e) {
             return new FileOperation(500, null, "File-Operation failed: " + e.getMessage());
         }
@@ -83,10 +74,12 @@ public class FileOperation {
     /**
      * Downloads a file from a URL or reads it from classpath/filesystem.
      *
-     * Fix for Issue #19 / #2: HTTP connections now properly report the actual
-     * HTTP response code instead of always returning 500 on any error.
-     * A User-Agent header is set to avoid 403/500 from servers that block
-     * headless Java clients (e.g. GitHub raw, minecraftforge.net).
+     * Binary files (JAR, ZIP) are saved as raw bytes to avoid corruption.
+     * Text files (JSON, conf, xml) are decoded as UTF-8 text.
+     *
+     * Fixes:
+     * - Issue #19: proper HTTP error codes via HttpURLConnection + User-Agent header
+     * - Binary corruption: JAR/ZIP are streamed as bytes, not decoded as UTF-8 text
      */
     public static FileOperation downloadOrReadFile(String source, String destinationPath) {
         boolean isUrl = source.toLowerCase().startsWith("http://") || source.toLowerCase().startsWith("https://");
@@ -101,16 +94,15 @@ public class FileOperation {
             if (in == null) {
                 in = Files.newInputStream(Paths.get(source));
             }
-            return readFileContent(in, destinationPath);
+            return readContent(in, destinationPath, isBinaryPath(source));
         } catch (IOException e) {
             return new FileOperation(500, null, "File-Operation failed: " + e.getMessage());
         }
     }
 
     /**
-     * Downloads a file from a URL with proper HTTP handling.
-     * Sets a User-Agent to avoid being blocked by CDNs and properly
-     * returns the actual HTTP response code on errors.
+     * Downloads a file from URL with proper HTTP handling.
+     * Binary files (JAR, ZIP) are saved using raw byte streaming.
      */
     private static FileOperation downloadFromUrl(String urlString, String destinationPath) {
         HttpURLConnection connection = null;
@@ -118,20 +110,21 @@ public class FileOperation {
             URL url = new URL(urlString);
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setRequestProperty("User-Agent", "Forge-Server-Starter/3.6 (Java/" + System.getProperty("java.version") + ")");
-            connection.setRequestProperty("Accept", "application/json, text/plain, */*");
+            connection.setRequestProperty("User-Agent",
+                    "Forge-Server-Starter/3.6 (Java/" + System.getProperty("java.version") + ")");
+            connection.setRequestProperty("Accept", "application/java-archive, application/zip, application/json, text/plain, */*");
             connection.setConnectTimeout(10000);
-            connection.setReadTimeout(30000);
+            connection.setReadTimeout(60000); // JAR downloads can be slow
             connection.setInstanceFollowRedirects(true);
 
             int responseCode = connection.getResponseCode();
 
             if (responseCode >= 200 && responseCode < 300) {
+                boolean binary = isBinaryPath(urlString) || isBinaryPath(destinationPath);
                 try (InputStream in = connection.getInputStream()) {
-                    return readFileContent(in, destinationPath);
+                    return readContent(in, destinationPath, binary);
                 }
             } else {
-                // Return actual HTTP error code, not 500
                 String errorBody = null;
                 try (InputStream errStream = connection.getErrorStream()) {
                     if (errStream != null) {
@@ -142,7 +135,8 @@ public class FileOperation {
                         errorBody = sb.toString();
                     }
                 }
-                return new FileOperation(responseCode, null, "HTTP error: " + responseCode + (errorBody != null ? " - " + errorBody : ""));
+                return new FileOperation(responseCode, null,
+                        "HTTP error: " + responseCode + (errorBody != null ? " - " + errorBody : ""));
             }
         } catch (IOException e) {
             int code = 500;
@@ -151,20 +145,10 @@ public class FileOperation {
             }
             return new FileOperation(code, null, "Download failed: " + e.getMessage());
         } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
+            if (connection != null) connection.disconnect();
         }
     }
 
-    /**
-     * Downloads or reads a file with optional cache support.
-     *
-     * @param source          URL or file path
-     * @param destinationPath Local path to save or check the file
-     * @param maxAge          Maximum age of the file cache in milliseconds, 0 = no caching
-     * @return FileOperation object with status and content or error info
-     */
     public static FileOperation downloadOrReadFile(String source, String destinationPath, long maxAge) {
         if (maxAge > 0) {
             File file = new File(destinationPath);
@@ -175,8 +159,31 @@ public class FileOperation {
         return downloadOrReadFile(source, destinationPath);
     }
 
-    // Helper method to read file content from InputStream
-    private static FileOperation readFileContent(InputStream in, String destinationPath) throws IOException {
+    /**
+     * Reads content from an InputStream.
+     *
+     * @param in              the input stream
+     * @param destinationPath where to save the file, or null to just return content
+     * @param binary          if true, streams raw bytes (for JAR/ZIP); if false, decodes as UTF-8 text
+     */
+    private static FileOperation readContent(InputStream in, String destinationPath, boolean binary) throws IOException {
+        if (binary && destinationPath != null && !destinationPath.isEmpty()) {
+            // Binary mode: stream raw bytes directly to file, no String conversion
+            File dest = new File(destinationPath);
+            dest.getParentFile().mkdirs();
+            try (OutputStream out = new FileOutputStream(dest)) {
+                byte[] buf = new byte[8192];
+                int read;
+                long total = 0;
+                while ((read = in.read(buf)) != -1) {
+                    out.write(buf, 0, read);
+                    total += read;
+                }
+                return new FileOperation(200, "Binary file saved (" + total + " bytes)", "File downloaded and saved");
+            }
+        }
+
+        // Text mode: decode as UTF-8
         BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         StringBuilder content = new StringBuilder();
         String line;
