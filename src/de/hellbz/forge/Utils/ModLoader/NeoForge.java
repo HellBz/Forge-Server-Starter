@@ -37,24 +37,27 @@ public class NeoForge {
                         String version = versionsArray.getString(i);
                         String[] parts = version.split("\\.");
 
-                        // NeoForge versioning (from docs.neoforged.net/docs/gettingstarted/versioning):
-                        //   major = MC minor version, minor = MC patch version
-                        //   e.g. NeoForge 20.2.x -> MC 1.20.2
-                        //        NeoForge 21.1.x -> MC 1.21.1
-                        // From MC 26.x, Minecraft dropped the leading '1.' in its own version string,
-                        //   e.g. NeoForge 26.1.x.y -> MC 26.1  (NOT 1.26.1)
-                        String neoMajor = parts[0]; // e.g. 20, 21, 26
-                        String neoMinor = parts.length > 1 ? parts[1] : "0"; // e.g. 2, 1
+                        // NeoForge versioning:
+                        // Old (MC 1.x era, NeoForge major < 26):
+                        //   3 segments: <mcMinor>.<mcPatch>.<nfBuild>  e.g. 21.1.3 -> MC 1.21.1
+                        // New (MC 26+ era, NeoForge major >= 26):
+                        //   4 segments: <mcMajor>.<mcMinor>.<mcPatch>.<nfBuild>  e.g. 26.1.2.2-beta -> MC 26.1.2
+                        // See: https://neoforged.net/news/26.1release/
                         int neoMajorInt = 0;
-                        try { neoMajorInt = Integer.parseInt(neoMajor); } catch (NumberFormatException ignored) {}
+                        try { neoMajorInt = Integer.parseInt(parts[0]); } catch (NumberFormatException ignored) {}
 
-                        // MC 1.x era: NeoForge major <= 21 (or whenever MC kept "1." prefix)
-                        // MC 26+ era: NeoForge major >= 26, MC version is just "major.minor"
                         String mcKey;
                         if (neoMajorInt < 26) {
+                            // Old scheme: first two segments = MC minor + patch -> key "1.major.minor"
+                            String neoMajor = parts[0];
+                            String neoMinor = parts.length > 1 ? parts[1] : "0";
                             mcKey = "1." + neoMajor + "." + neoMinor;
                         } else {
-                            mcKey = neoMajor + "." + neoMinor;
+                            // New scheme: first three segments = full MC version -> key "major.minor.patch"
+                            String p0 = parts[0];
+                            String p1 = parts.length > 1 ? parts[1] : "0";
+                            String p2 = parts.length > 2 ? parts[2] : "0";
+                            mcKey = p0 + "." + p1 + "." + p2;
                         }
 
                         Map<String, Object> versionInfo = NeoVersions.getOrDefault(mcKey, new HashMap<>());

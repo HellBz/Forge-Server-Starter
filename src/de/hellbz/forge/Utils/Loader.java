@@ -253,15 +253,23 @@ public class Loader {
                 if (matcherNeoForge.find()) {
                     String neoVer = matcherNeoForge.group(1); // e.g. "26.1.2.2" or "21.1.3"
                     String[] parts = neoVer.split("\\.");
-                    // NeoForge versioning: major=MC minor, minor=MC patch
-                    // e.g. 20.2.x -> MC 1.20.2 | 21.1.x -> MC 1.21.1 | 26.1.x -> MC 26.1
-                    String neoMajor = parts.length > 0 ? parts[0] : "0";
-                    String neoMinor = parts.length > 1 ? parts[1] : "0";
+                    // NeoForge versioning:
+                    // Old (major < 26): 3 segments, first two = MC minor+patch -> "1.major.minor"
+                    //   e.g. 21.1.3 -> MC 1.21.1
+                    // New (major >= 26): 4 segments, first three = full MC version -> "major.minor.patch"
+                    //   e.g. 26.1.2.2-beta -> MC 26.1.2
                     int neoMajorInt = 0;
-                    try { neoMajorInt = Integer.parseInt(neoMajor); } catch (NumberFormatException ignored) {}
-                    Config.minecraftVersion = (neoMajorInt < 26)
-                            ? "1." + neoMajor + "." + neoMinor
-                            : neoMajor + "." + neoMinor;
+                    try { neoMajorInt = Integer.parseInt(parts[0]); } catch (NumberFormatException ignored) {}
+                    if (neoMajorInt < 26) {
+                        String neoMajor = parts.length > 0 ? parts[0] : "0";
+                        String neoMinor = parts.length > 1 ? parts[1] : "0";
+                        Config.minecraftVersion = "1." + neoMajor + "." + neoMinor;
+                    } else {
+                        String p0 = parts.length > 0 ? parts[0] : "0";
+                        String p1 = parts.length > 1 ? parts[1] : "0";
+                        String p2 = parts.length > 2 ? parts[2] : "0";
+                        Config.minecraftVersion = p0 + "." + p1 + "." + p2;
+                    }
                     Config.loaderVersion = neoVer;
                     Config.installerFile = currentFiles[i].getName();
                     if (output) LogInfo("Match found INSTALLER with MC-Version " + Config.minecraftVersion + " and NeoForge " + Config.loaderVersion);
