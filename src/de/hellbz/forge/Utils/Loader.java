@@ -396,12 +396,25 @@ public class Loader {
 
                         Matcher matcher = pattern.matcher(latestVersionFolder.getName());
                         if (matcher.matches()) {
-                            Config.minecraftVersion = Config.isForge
-                                    ? matcher.group("minecraftVersion")
-                                    : "1." + matcher.group("minecraftVersion");
-                            Config.loaderVersion = Config.isForge
-                                    ? matcher.group("loaderVersion")
-                                    : latestVersionFolder.getName();
+                            if (Config.isForge) {
+                                Config.minecraftVersion = matcher.group("minecraftVersion");
+                                Config.loaderVersion = matcher.group("loaderVersion");
+                            } else {
+                                // NeoForge folder name = full NeoForge version e.g. "26.1.2.2-beta" or "21.1.3"
+                                // Derive MC version using same logic as NeoForge.getVersions()
+                                String folderName = latestVersionFolder.getName();
+                                String[] fp = folderName.split("\\.");
+                                int neoMaj = 0;
+                                try { neoMaj = Integer.parseInt(fp[0]); } catch (NumberFormatException ignored) {}
+                                if (neoMaj < 26) {
+                                    // Old scheme: first two = MC minor+patch -> "1.major.minor"
+                                    Config.minecraftVersion = "1." + (fp.length > 0 ? fp[0] : "0") + "." + (fp.length > 1 ? fp[1] : "0");
+                                } else {
+                                    // New scheme: first three = full MC version -> "major.minor.patch"
+                                    Config.minecraftVersion = (fp.length > 0 ? fp[0] : "0") + "." + (fp.length > 1 ? fp[1] : "0") + "." + (fp.length > 2 ? fp[2] : "0");
+                                }
+                                Config.loaderVersion = folderName;
+                            }
                             LogInfo("Found Minecraft: " + Config.minecraftVersion
                                     + " with " + (Config.isForge ? "Forge" : "NeoForge") + "-Version: " + Config.loaderVersion);
                         }
@@ -458,13 +471,14 @@ public class Loader {
     public static void checkAndUpdateLoader() {
         if (Config.minecraftVersion == null || Config.loaderVersion == null) return;
 
+        String loaderLabel = Config.isForge ? "Forge" : "NeoForge";
         String autoUpdate = Config.configProps.getProperty("auto_update_loader", "false");
         if (!autoUpdate.equalsIgnoreCase("true")) {
-            LogDebug("Forge-Version-Update: auto_update_loader is disabled. Set auto_update_loader=true in " + Config.PROPERTIES_FILE + " to enable.");
+            LogInfo("Forge-Version-Update: Disabled (set auto_update_loader=true in " + Config.PROPERTIES_FILE + " to enable).");
             return;
         }
 
-        LogInfo("Forge-Version-Update: Checking for newer " + (Config.isForge ? "Forge" : "NeoForge") + " version...");
+        LogInfo("Forge-Version-Update: Checking for newer " + loaderLabel + " version for MC " + Config.minecraftVersion + "...");
 
         // Refresh version lists
         Map<String, Map<String, Object>> versions = Config.isForge ? Forge.getVersions() : NeoForge.getVersions();
@@ -475,7 +489,7 @@ public class Loader {
 
         String mcKey = Config.minecraftVersion;
         if (!versions.containsKey(mcKey)) {
-            LogDebug("Forge-Version-Update: No versions found for Minecraft " + mcKey);
+            LogInfo("Forge-Version-Update: No update information available for " + loaderLabel + " on MC " + mcKey + ". Skipping.");
             return;
         }
 
@@ -487,8 +501,8 @@ public class Loader {
 
         Data.VersionComparator vc = new Data.VersionComparator();
         if (vc.compare(Config.loaderVersion, latestVersion) < 0) {
-            LogWarning("Forge-Version-Update: Newer version available: " + latestVersion + " (installed: " + Config.loaderVersion + ")");
-            LogInfo("Forge-Version-Update: Downloading " + (Config.isForge ? "Forge" : "NeoForge") + " " + latestVersion + "...");
+            LogWarning("Forge-Version-Update: Newer " + loaderLabel + " version available: " + latestVersion + " (installed: " + Config.loaderVersion + ")");
+            LogInfo("Forge-Version-Update: Downloading " + loaderLabel + " " + latestVersion + "...");
 
             String previousVersion = Config.loaderVersion;
             Config.loaderVersion = latestVersion;
@@ -499,14 +513,14 @@ public class Loader {
 
             FileOperation dl = FileOperation.downloadOrReadFile(links.get("fileURL"), Config.rootFolder + links.get("localFilePath"));
             if (dl != null && dl.getResponseCode() == 200) {
-                LogInfo("Forge-Version-Update: Downloaded " + (Config.isForge ? "Forge" : "NeoForge") + " " + latestVersion);
+                LogInfo("Forge-Version-Update: Downloaded " + loaderLabel + " " + latestVersion);
                 Config.installerFile = new File(Config.rootFolder + links.get("localFilePath")).getName();
                 installLoader();
                 if (!Config.startupError) {
                     // Refresh loader folder references after update
                     checkLoaderFolder();
                     checkLocalFolder();
-                    LogInfo("Forge-Version-Update: Successfully updated to " + (Config.isForge ? "Forge" : "NeoForge") + " " + latestVersion);
+                    LogInfo("Forge-Version-Update: Successfully updated to " + loaderLabel + " " + latestVersion);
                 } else {
                     LogWarning("Forge-Version-Update: Update failed, reverting to previous version " + previousVersion);
                     Config.loaderVersion = previousVersion;
@@ -517,8 +531,7 @@ public class Loader {
                 Config.loaderVersion = previousVersion;
             }
         } else {
-            LogInfo("Forge-Version-Update: Already on the latest " + (Config.isForge ? "Forge" : "NeoForge")
-                    + " version: " + Config.loaderVersion);
+            LogInfo("Forge-Version-Update: Already on the latest " + loaderLabel + " version: " + Config.loaderVersion);
         }
     }
 }
