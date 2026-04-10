@@ -143,8 +143,25 @@ public class Loader {
                 return false;
             }
 
-            // Show available loader versions and accept 'latest'/'recommended' keywords
-            if (Config.forgeVersions.containsKey(Config.minecraftVersion)) {
+            boolean hasForge = Config.forgeVersions.containsKey(Config.minecraftVersion);
+            boolean hasNeo = Config.neoVersions.containsKey(Config.minecraftVersion);
+
+            // Ask user to choose loader type if both are available for this MC version
+            if (hasForge && hasNeo) {
+                LogInfo("Which MOD-LOADER you like to install? [ forge / neoforge ]:");
+                String loaderTypeInput = in.nextLine().trim().toLowerCase();
+                while (!loaderTypeInput.equals("forge") && !loaderTypeInput.equals("neoforge")) {
+                    LogWarning("Invalid choice. Please type 'forge' or 'neoforge':");
+                    loaderTypeInput = in.nextLine().trim().toLowerCase();
+                }
+                Config.isForge = loaderTypeInput.equals("forge");
+            } else {
+                Config.isForge = hasForge;
+            }
+
+            // Show available versions for the chosen loader
+            String loaderVersionInput;
+            if (Config.isForge) {
                 String latestForge = (String) Config.forgeVersions.get(Config.minecraftVersion).get("latest");
                 String recForge = Config.forgeVersions.get(Config.minecraftVersion).containsKey("recommended")
                         ? (String) Config.forgeVersions.get(Config.minecraftVersion).get("recommended") : null;
@@ -153,47 +170,33 @@ public class Loader {
                 LogInfo("You can type 'latest'" + (recForge != null ? ", 'recommended'" : "") + " or a specific version number.");
                 LogInfo("You can also install all other Versions, listed on this Site: "
                         + "https://files.minecraftforge.net/net/minecraftforge/forge/index_" + Config.minecraftVersion + ".html");
-            }
-            if (Config.neoVersions.containsKey(Config.minecraftVersion)) {
+            } else {
                 String latestNeo = (String) Config.neoVersions.get(Config.minecraftVersion).get("latest");
                 LogInfo("Which NeoFORGED-Version you like to install [ Latest: " + latestNeo + " ]:");
                 LogInfo("You can type 'latest' or a specific version number.");
                 LogInfo("You can also install all other Versions, listed on this Site: https://projects.neoforged.net/neoforged/neoforge");
             }
 
-            String loaderVersionInput = in.nextLine().trim();
+            loaderVersionInput = in.nextLine().trim();
 
-            // Issue #2 fix: resolve 'latest' and 'recommended' keywords in guided installation
+            // Resolve 'latest' and 'recommended' keywords
             if (loaderVersionInput.equalsIgnoreCase("latest") || loaderVersionInput.equalsIgnoreCase("recommended")) {
-                // Try Forge first, then NeoForge
-                if (Config.forgeVersions.containsKey(Config.minecraftVersion)) {
-                    Config.isForge = true;
-                    if (loaderVersionInput.equalsIgnoreCase("latest")) {
-                        Config.loaderVersion = (String) Config.forgeVersions.get(Config.minecraftVersion).get("latest");
+                if (Config.isForge) {
+                    if (loaderVersionInput.equalsIgnoreCase("recommended")
+                            && Config.forgeVersions.get(Config.minecraftVersion).containsKey("recommended")) {
+                        Config.loaderVersion = (String) Config.forgeVersions.get(Config.minecraftVersion).get("recommended");
                     } else {
-                        // recommended
-                        if (Config.forgeVersions.get(Config.minecraftVersion).containsKey("recommended")) {
-                            Config.loaderVersion = (String) Config.forgeVersions.get(Config.minecraftVersion).get("recommended");
-                        } else {
-                            Config.loaderVersion = (String) Config.forgeVersions.get(Config.minecraftVersion).get("latest");
-                            LogWarning("No recommended version found, using latest: " + Config.loaderVersion);
+                        if (loaderVersionInput.equalsIgnoreCase("recommended")) {
+                            LogWarning("No recommended version found, using latest instead.");
                         }
+                        Config.loaderVersion = (String) Config.forgeVersions.get(Config.minecraftVersion).get("latest");
                     }
-                } else if (Config.neoVersions.containsKey(Config.minecraftVersion)) {
-                    Config.isForge = false;
+                } else {
                     Config.loaderVersion = (String) Config.neoVersions.get(Config.minecraftVersion).get("latest");
                 }
                 LogInfo("Resolved '" + loaderVersionInput + "' to version: " + Config.loaderVersion);
             } else {
                 Config.loaderVersion = loaderVersionInput;
-                // Determine if NeoForge or Forge based on which map contains the version
-                Pattern pattern = Pattern.compile(Pattern.quote(Config.loaderVersion));
-                Matcher neoMatcher = pattern.matcher(Config.neoVersions.toString());
-                if (neoMatcher.find()) {
-                    Config.isForge = false;
-                } else {
-                    Config.isForge = true;
-                }
             }
 
             return true;
