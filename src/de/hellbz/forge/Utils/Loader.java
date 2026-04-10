@@ -253,11 +253,15 @@ public class Loader {
                 if (matcherNeoForge.find()) {
                     String neoVer = matcherNeoForge.group(1); // e.g. "26.1.2.2" or "21.1.3"
                     String[] parts = neoVer.split("\\.");
-                    // NeoForge version format: <mcMajor>.<mcMinor>.<build>[.<patch>]
-                    // MC version is "1.<major>.<minor>"
-                    String mcMajor = parts.length > 0 ? parts[0] : "0";
-                    String mcMinor = parts.length > 1 ? parts[1] : "0";
-                    Config.minecraftVersion = "1." + mcMajor + "." + mcMinor;
+                    // NeoForge versioning: major=MC minor, minor=MC patch
+                    // e.g. 20.2.x -> MC 1.20.2 | 21.1.x -> MC 1.21.1 | 26.1.x -> MC 26.1
+                    String neoMajor = parts.length > 0 ? parts[0] : "0";
+                    String neoMinor = parts.length > 1 ? parts[1] : "0";
+                    int neoMajorInt = 0;
+                    try { neoMajorInt = Integer.parseInt(neoMajor); } catch (NumberFormatException ignored) {}
+                    Config.minecraftVersion = (neoMajorInt < 26)
+                            ? "1." + neoMajor + "." + neoMinor
+                            : neoMajor + "." + neoMinor;
                     Config.loaderVersion = neoVer;
                     Config.installerFile = currentFiles[i].getName();
                     if (output) LogInfo("Match found INSTALLER with MC-Version " + Config.minecraftVersion + " and NeoForge " + Config.loaderVersion);
