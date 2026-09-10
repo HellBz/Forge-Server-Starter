@@ -257,6 +257,7 @@ public class Data {
     }
 
     public static String getJsonValue(String json, String path) {
+        if (json == null || json.trim().isEmpty()) return null;
         try {
             // Überprüfen, ob das JSON-String mit "[" beginnt (Array)
             char firstChar = json.trim().charAt(0);

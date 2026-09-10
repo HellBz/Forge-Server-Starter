@@ -23,7 +23,15 @@ public class Remote {
         // Use raw GitHub URL which returns plain JSON (no HTML wrapper, no bot blocking)
         String remoteVersionUrl = "https://raw.githubusercontent.com/HellBz/Forge-Server-Starter/HEAD/res/modInfo.json";
 
-        String localVersion = Data.getJsonValue((String) FileOperation.downloadOrReadFile(localVersionPath).getContent(), "version");
+        FileOperation localContent = FileOperation.downloadOrReadFile(localVersionPath);
+        String localVersion = null;
+        if (localContent != null && localContent.getContent() != null) {
+            localVersion = Data.getJsonValue((String) localContent.getContent(), "version");
+        }
+        if (localVersion == null) {
+            Data.LogDebug("Could not read local version from modInfo.json, skipping update check.");
+            return;
+        }
 
         if (Config.configProps.getProperty("unique_id_request", "true").equals("true")) {
             try {
