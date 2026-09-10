@@ -1,7 +1,6 @@
 .idea
 build/
-out/*
-!out/compiled/minecraft_server.jar
+out/
 test/
 server_starter.conf
 !res/server_starter.conf
