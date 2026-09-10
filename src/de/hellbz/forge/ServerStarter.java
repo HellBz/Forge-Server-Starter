@@ -63,11 +63,19 @@ public class ServerStarter {
                 LogDebug("SCRIPT USE -Xmx and -Xms for Start.");
             } else {
                 Config.startupError = true;
-                LogWarning("Please use -Xmx and -Xms for startup this script.");
-                if (!isReallyHeadless()) {
-                    JOptionPane.showMessageDialog(null, "Script only works in Batch-Mode!\nA startup file for Batch-Mode has been created.");
-                }
                 Document.StartFile();
+                LogWarning("Please use -Xmx and -Xms for startup this script.");
+                LogInfo("A startup file for Batch-Mode has been created: start_server." + (Config.OS.contains("win") ? "bat" : "sh"));
+                try {
+                    if (!isReallyHeadless()) {
+                        JOptionPane.showMessageDialog(null,
+                            "Script only works in Batch-Mode!\n" +
+                            "A startup file for Batch-Mode has been created.\n\n" +
+                            "Please use: start_server." + (Config.OS.contains("win") ? "bat" : "sh"));
+                    }
+                } catch (Exception e) {
+                    // GUI not available, message already logged to console
+                }
             }
         }
 

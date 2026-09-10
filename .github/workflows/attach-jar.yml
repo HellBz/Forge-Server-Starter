@@ -32,10 +32,11 @@ jobs:
           set -euo pipefail
           mkdir -p build/classes
 
+          find src -name "*.java" -not -path "*/NotInUse/*" > sources.txt
           javac -encoding UTF-8 \
             -cp "libs/json-20230618.jar:libs/jsoup-1.17.2.jar" \
             -d build/classes \
-            $(find src -name "*.java")
+            @sources.txt
 
           echo "Compilation successful."
 
@@ -53,15 +54,21 @@ jobs:
           cd build/classes
           jar xf ../../libs/json-20230618.jar
           jar xf ../../libs/jsoup-1.17.2.jar
-          # Remove dependency META-INF to avoid manifest conflicts
-          rm -rf META-INF
+          # Remove dependency metadata but keep META-INF folder
+          rm -rf META-INF/maven
           cd ../..
+
+      - name: Copy project manifest
+        run: |
+          mkdir -p build/classes/META-INF
+          cp src/META-INF/MANIFEST.MF build/classes/META-INF/MANIFEST.MF
 
       - name: Build fat JAR
         run: |
           set -euo pipefail
-          jar cfm build/minecraft_server.jar src/META-INF/MANIFEST.MF -C build/classes .
-          echo "JAR size: $(du -sh build/minecraft_server.jar | cut -f1)"
+          cd build/classes
+          jar cfm ../../build/minecraft_server.jar META-INF/MANIFEST.MF .
+          echo "JAR size: $(du -sh ../../build/minecraft_server.jar | cut -f1)"
 
       - name: Upload JAR as build artifact (always)
         uses: actions/upload-artifact@v4
