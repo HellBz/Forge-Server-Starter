@@ -3,8 +3,7 @@ package de.hellbz.forge;
 import de.hellbz.forge.Utils.*;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.*;
@@ -22,14 +21,13 @@ public class ServerStarter {
         LogInfo("By " + TXT_GREEN + "HellBz" + TXT_RESET + ".de");
         LogInfo("");
         LogInfo("-----------------------------------------------");
-
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        if (Arrays.toString(args).toLowerCase().contains("-autofile") ) {
+        if (Arrays.toString(args).toLowerCase().contains("-autofile")) {
 
-            FileOperation.downloadOrReadFile("/res/forge-auto-install.txt", Config.rootFolder + File.separator + "forge-auto-install.txt" );
+            FileOperation.downloadOrReadFile("/res/forge-auto-install.txt", Config.rootFolder + File.separator + "forge-auto-install.txt");
 
             LogWarning("Auto Installation-File successfully created.");
             LogError("EXIT FORGE-Server-Starter ");
@@ -46,7 +44,7 @@ public class ServerStarter {
         Config.startupParameter = arguments.toArray(new String[0]);
 
         Data.logSelectedSystemProperties();
-        LogDebug( Config.PROPERTIES_FILE + ": " + Config.configProps.toString() );
+        LogDebug(Config.PROPERTIES_FILE + ": " + Config.configProps.toString());
 
         //DEBUG
         String joinedStartupParameter = Arrays.toString(Config.startupParameter);
@@ -60,10 +58,8 @@ public class ServerStarter {
         if (isReallyHeadless()) {
             //Headless, all Fine
             LogDebug("This is Headless Client");
-
         } else {
-
-            if ( Data.containsMemoryParameters(args) || Data.containsMemoryParameters(Config.startupParameter)) {
+            if (Data.containsMemoryParameters(args) || Data.containsMemoryParameters(Config.startupParameter)) {
                 LogDebug("SCRIPT USE -Xmx and -Xms for Start.");
             } else {
                 Config.startupError = true;
@@ -72,12 +68,11 @@ public class ServerStarter {
                     JOptionPane.showMessageDialog(null, "Script only works in Batch-Mode!\nA startup file for Batch-Mode has been created.");
                 }
                 Document.StartFile();
-                // Möglichkeit, hier zu beenden, abhängig von der gewünschten Logik
             }
         }
 
         //No Internet Connection, only manually installation
-        if ( !Config.startupError ){
+        if (!Config.startupError) {
             String networkCheckSetting = Config.configProps.getProperty("network_check", "true");
             if (!Net.isConnected && !networkCheckSetting.equalsIgnoreCase("false")) {
                 LogInfo("Place your Forge-Installer-JAR directly next to the current JAR.");
@@ -90,23 +85,26 @@ public class ServerStarter {
         }
 
         //Try Auto-Installer
-        if (!Config.librariesFolder.exists() && !Config.startupError && !Loader.checkLocalInstaller() ) {
-            //checking Minecraft Version and download, if installer-File not already exist or if error occurs
-            if ( Loader.checkLoaderVersion() ) {
+        if (!Config.librariesFolder.exists() && !Config.startupError && !Loader.checkLocalInstaller()) {
+            if (Loader.checkLoaderVersion()) {
                 Loader.downloadLoader();
             }
         }
 
         //Try to use Installer-File
-        if (!Config.librariesFolder.exists() && !Config.startupError && Loader.checkLocalInstaller(true) ) {
+        if (!Config.librariesFolder.exists() && !Config.startupError && Loader.checkLocalInstaller(true)) {
             LogInfo("Check for Loader-Installation-File ...");
             Loader.installLoader();
         }
 
         if (Config.librariesFolder.exists() && !Config.startupError) {
-            //Try to find loader in Libraries and Forge Folders
             Loader.checkLoaderFolder();
             Loader.checkLocalFolder();
+        }
+
+        // Forge-Version-Update: check and update Forge/NeoForge to the latest version on every start
+        if (Config.librariesFolder.exists() && !Config.startupError && Net.isConnected) {
+            Loader.checkAndUpdateLoader();
         }
 
         if (!Config.startupError) {
@@ -123,36 +121,36 @@ public class ServerStarter {
                     where.add(javaPath);
                     LogDebug("Use Custom Java Path: " + javaPath);
                 } else {
-                    where.add( System.getProperty("java.home") + File.separator + "bin" + File.separator + "java" );
+                    where.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
                     LogDebug("Use Standard Java Path");
                 }
 
                 if (timezone != null && !timezone.isEmpty()) {
-                    // Die Property existiert und ist nicht leer. Jetzt kannst du weiter prüfen.
                     if (!timezone.equals("UTC")) {
                         where.add("-Duser.timezone=" + timezone);
                     }
                 }
 
-                LogDebug( Config.startupFile );
+                LogDebug(Config.startupFile);
 
                 if (Config.startupFile.endsWith(".jar")) {
                     where.add("-jar");
                     Collections.addAll(where, Config.startupParameter);
                     where.add(Config.startupFile);
                 } else {
-
-                    File installerFileJavaArgs = new java.io.File(Config.rootFolder + java.io.File.separator + "user_jvm_args.txt");
+                    File installerFileJavaArgs = new File(Config.rootFolder + File.separator + "user_jvm_args.txt");
                     if (installerFileJavaArgs.exists()) {
                         where.add("@user_jvm_args.txt");
-                    }else {
+                    } else {
                         Collections.addAll(where, Config.startupParameter);
                     }
-
                     where.add("@" + System.getProperty("user.dir") + File.separator + Config.startupFile);
 
-                    if (Config.javaVersion < 60) {
+                    // Java class version check - updated for Java 21+ and Java 25+
+                    // Java 17 = 61, Java 21 = 65, Java 25 = 69
+                    if (Config.javaVersion < 61) {
                         LogWarning("The Java-Class-Version is with \"" + Config.javaVersion + "\" too low to start the Server!");
+                        LogWarning("Minimum required: Java 17 (class version 61). Your version: class version " + Config.javaVersion);
                         Config.startupError = true;
                     }
                 }
@@ -162,7 +160,6 @@ public class ServerStarter {
                 Config.CMD_ARRAY = new String[where.size()];
                 where.toArray(Config.CMD_ARRAY);
             } else {
-                //Config.startupError = true;
                 LogWarning("The Start-File \"" + Config.startupFile + "\" does not exist!");
             }
         }
@@ -173,32 +170,90 @@ public class ServerStarter {
         }
 
         if (!Config.startupError) {
-
             if (Config.CMD_ARRAY != null) {
-                LogInfo("");
-                LogInfo("Server is Running in TimeZone: " + Config.configProps.getProperty("timezone"));
-                LogInfo("Setup your own timezone in " + Config.PROPERTIES_FILE );
-                LogInfo("");
-                LogInfo("Start " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion + " Server");
-                LogInfo("-----------------------------------------------");
+                // Server restart loop - supports /restart command (Faster Restart feature)
+                boolean shouldRestart = true;
+                while (shouldRestart) {
+                    shouldRestart = false;
 
-                //DEBUG StartUp Commands
-                LogDebug("Startup-ARRAY " + TXT_BLUE + Arrays.toString(Config.CMD_ARRAY) + TXT_RESET);
+                    LogInfo("");
+                    LogInfo("Server is Running in TimeZone: " + Config.configProps.getProperty("timezone"));
+                    LogInfo("Setup your own timezone in " + Config.PROPERTIES_FILE);
+                    LogInfo("");
+                    LogInfo("Start " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion + " Server");
+                    LogInfo("-----------------------------------------------");
+                    LogInfo("Tip: Type '/restart' in server console to trigger a fast restart.");
+                    LogInfo("-----------------------------------------------");
 
-                Process serverProcess = new ProcessBuilder(Config.CMD_ARRAY)
-                        .inheritIO()
-                        .start();
+                    LogDebug("Startup-ARRAY " + TXT_BLUE + Arrays.toString(Config.CMD_ARRAY) + TXT_RESET);
 
-                int exitCode = serverProcess.waitFor();
+                    ProcessBuilder pb = new ProcessBuilder(Config.CMD_ARRAY);
+                    pb.redirectErrorStream(true);
 
-                if (exitCode == 0) {
-                    LogWarning("Server is successfully stopped.");
-                    System.exit(0);
-                } else {
-                    LogError("Server is Crashed with Exit-Code: " + exitCode);
-                    LogWarning("Please check your files and upload them to the server again if necessary. ");
-                    LogError("EXIT Server-Starter ");
-                    System.exit(exitCode);
+                    Process serverProcess = pb.start();
+
+                    // Thread to handle stdin forwarding (fixes Issue #18 - console broken with Java 17+)
+                    Thread stdinForwarder = new Thread(() -> {
+                        try {
+                            BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+                            OutputStream serverInput = serverProcess.getOutputStream();
+                            PrintWriter serverWriter = new PrintWriter(new OutputStreamWriter(serverInput), true);
+                            String line;
+                            while ((line = consoleReader.readLine()) != null) {
+                                serverWriter.println(line);
+                            }
+                        } catch (IOException e) {
+                            // console closed
+                        }
+                    });
+                    stdinForwarder.setDaemon(true);
+                    stdinForwarder.start();
+
+                    // Thread to handle stdout/stderr and detect /restart (Faster Restart feature)
+                    final boolean[] restartRequested = {false};
+                    Thread stdoutReader = new Thread(() -> {
+                        try {
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                System.out.println(line);
+                                // Detect restart command issued by player or console
+                                if (line.toLowerCase().contains("issued server command: /restart")
+                                        || line.toLowerCase().contains("[f-s-s/restart]")
+                                        || line.contains("F-S-S: RESTART")) {
+                                    restartRequested[0] = true;
+                                    LogInfo("Restart command detected - restarting server gracefully...");
+                                    // Send stop command to server
+                                    try {
+                                        OutputStream out = serverProcess.getOutputStream();
+                                        out.write(("stop\n").getBytes());
+                                        out.flush();
+                                    } catch (IOException ignored) {}
+                                }
+                            }
+                        } catch (IOException e) {
+                            // process ended
+                        }
+                    });
+                    stdoutReader.setDaemon(false);
+                    stdoutReader.start();
+
+                    int exitCode = serverProcess.waitFor();
+                    stdoutReader.join(5000);
+
+                    if (restartRequested[0] || exitCode == Config.RESTART_EXIT_CODE) {
+                        LogWarning("Server is restarting...");
+                        LogInfo("-----------------------------------------------");
+                        shouldRestart = true;
+                    } else if (exitCode == 0) {
+                        LogWarning("Server is successfully stopped.");
+                        System.exit(0);
+                    } else {
+                        LogError("Server is Crashed with Exit-Code: " + exitCode);
+                        LogWarning("Please check your files and upload them to the server again if necessary.");
+                        LogError("EXIT Server-Starter ");
+                        System.exit(exitCode);
+                    }
                 }
             } else {
                 Config.startupError = true;
@@ -207,11 +262,9 @@ public class ServerStarter {
         }
 
         if (Config.startupError) {
-
             LogError("EXIT FORGE-Server-Starter ");
             LogError("-----------------------------------------------");
             System.exit(-1);
-
         }
     }
 }
