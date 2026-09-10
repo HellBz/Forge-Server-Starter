@@ -1,9 +1,9 @@
-name: Build and Release
+name: Build and attach JAR to release
 
 on:
+  release:
+    types: [published]  # Build and attach JAR when a release is published on GitHub
   push:
-    tags:
-      - 'v*'  # Build and release on tag push
     branches: [master]  # Also build on every push to master (for testing)
   pull_request:
     branches: [master]  # Build on PRs to master to verify compilation
@@ -78,16 +78,16 @@ jobs:
           path: build/minecraft_server.jar
           retention-days: 30
 
-      # --- Release-only steps below (triggered by tag push) ---
+      # --- Release-only steps below ---
 
       - name: Prepare release bundle
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'release'
         id: prep
         shell: bash
         run: |
           set -euo pipefail
 
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${{ github.event.release.tag_name }}"
           VERSION="${TAG#v}"
 
           STAGE="release_bundle"
@@ -144,14 +144,12 @@ jobs:
           echo "zip=$ZIP_NAME"       >> "$GITHUB_OUTPUT"
           echo "jar=$DEST_JAR"       >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub Release and upload assets
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Upload ZIP and JAR to release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
           files: |
             ${{ steps.prep.outputs.zip }}
             ${{ steps.prep.outputs.jar }}
-          draft: false
-          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
