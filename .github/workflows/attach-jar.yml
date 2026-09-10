@@ -34,6 +34,7 @@ jobs:
 
           find src -name "*.java" -not -path "*/NotInUse/*" > sources.txt
           javac -encoding UTF-8 \
+            -source 1.8 -target 1.8 \
             -cp "libs/json-20230618.jar:libs/jsoup-1.17.2.jar" \
             -d build/classes \
             @sources.txt
