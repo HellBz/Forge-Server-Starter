@@ -85,8 +85,12 @@ public class FileOperation {
 
     public static FileOperation downloadOrReadFile(String source, String destinationPath) {
         boolean isUrl = source.toLowerCase().startsWith("http://") || source.toLowerCase().startsWith("https://");
+        boolean isBinary = source.toLowerCase().endsWith(".jar") || source.toLowerCase().endsWith(".zip");
 
         try (InputStream in = isUrl ? new URL(source).openStream() : FileOperation.class.getResourceAsStream(source) != null ? FileOperation.class.getResourceAsStream(source) : Files.newInputStream(Paths.get(source))) {
+            if (isBinary && destinationPath != null && !destinationPath.isEmpty()) {
+                return readBinaryContent(in, destinationPath);
+            }
             return readFileContent(in, destinationPath);
         } catch (IOException e) {
             return new FileOperation(500, null, "File-Operation failed: " + e.getMessage());
@@ -111,6 +115,20 @@ public class FileOperation {
         }
         // Download and cache if the file does not exist, is outdated, or if caching is not used
         return downloadOrReadFile(source, destinationPath);
+    }
+
+    // Hilfsmethode zum binären Kopieren von Dateien (JAR, ZIP etc.)
+    private static FileOperation readBinaryContent(InputStream in, String destinationPath) throws IOException {
+        try (OutputStream out = Files.newOutputStream(Paths.get(destinationPath), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            long totalBytes = 0;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+                totalBytes += bytesRead;
+            }
+            return new FileOperation(200, "Binary file saved (" + totalBytes + " bytes)", "File downloaded and saved");
+        }
     }
 
     // Hilfsmethode zum Lesen des Dateiinhalts
@@ -158,7 +176,7 @@ public class FileOperation {
         }
 
         // Testen des Speicherns und Lesens von Remote-Dateien
-        FileOperation remoteSaveReadResult = downloadOrReadFile("https://api.curseforge.com/v1/minecraft/modloader/", "ModLoader.json");
+        FileOperation remoteSaveReadResult = downloadOrReadFile("https://api.curseforge.com/v1/minecraft/modloader/?includeAll=true", "ModLoader.json");
         if (remoteSaveReadResult.getResponseCode() == 200) {
             //System.out.println("Remote-Dateiinhalt (gespeichert): " + remoteSaveReadResult.getContent());
             System.out.println("Datei erfolgreich gespeichert: " + remoteSaveReadResult.getAdditionalData());
@@ -168,7 +186,7 @@ public class FileOperation {
         }
 
         // Testen des Speicherns und Lesens von Remote-Dateien mit caching file
-        FileOperation remoteSaveReadResultCache = downloadOrReadFile("https://api.curseforge.com/v1/minecraft/modloader/", "ModLoaderCahce.json", 60000 );
+        FileOperation remoteSaveReadResultCache = downloadOrReadFile("https://api.curseforge.com/v1/minecraft/modloader/?version=1.20.4", "ModLoaderCache.json", 60000 );
         if (remoteSaveReadResult.getResponseCode() == 200) {
             //System.out.println("Remote-Dateiinhalt (gespeichert): " + remoteSaveReadResultCache.getContent());
             System.out.println("Datei erfolgreich gespeichert: " + remoteSaveReadResultCache.getAdditionalData());

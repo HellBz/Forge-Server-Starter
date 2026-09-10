@@ -13,11 +13,18 @@ public class Net {
 
     static {
 
-        checkInternetConnection();
-        if (isConnected)
-            LogInfo("Checking Internet... Connected to the Web.");
-        else
-            LogWarning("Checking Internet-Connection... Connection Failed.");
+        String networkCheckSetting = Config.configProps.getProperty("network_check", "true");
+
+        if (networkCheckSetting.equalsIgnoreCase("false")) {
+            isConnected = false;
+            LogInfo("Checking Internet... Skipped (network_check=false in " + Config.PROPERTIES_FILE + ").");
+        } else {
+            checkInternetConnection();
+            if (isConnected)
+                LogInfo("Checking Internet... Connected to the Web.");
+            else
+                LogWarning("Checking Internet-Connection... Connection Failed.");
+        }
     }
 
     public Net() {

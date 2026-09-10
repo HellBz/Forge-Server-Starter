@@ -78,11 +78,14 @@ public class ServerStarter {
 
         //No Internet Connection, only manually installation
         if ( !Config.startupError ){
-            if (!Net.isConnected) {
+            String networkCheckSetting = Config.configProps.getProperty("network_check", "true");
+            if (!Net.isConnected && !networkCheckSetting.equalsIgnoreCase("false")) {
                 LogInfo("Place your Forge-Installer-JAR directly next to the current JAR.");
                 Config.startupError = true;
-            } else {
+            } else if (Net.isConnected) {
                 Remote.checkForUpdate();
+            } else {
+                LogInfo("Network-Check is disabled, skipping update check. Trying offline start ...");
             }
         }
 
@@ -195,7 +198,7 @@ public class ServerStarter {
                     LogError("Server is Crashed with Exit-Code: " + exitCode);
                     LogWarning("Please check your files and upload them to the server again if necessary. ");
                     LogError("EXIT Server-Starter ");
-                    System.exit(Integer.parseInt(String.valueOf(exitCode)));
+                    System.exit(exitCode);
                 }
             } else {
                 Config.startupError = true;

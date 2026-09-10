@@ -300,7 +300,7 @@ public class Loader {
                     LogDebug("Use for Installer Custom Java Path: " + Config.configProps.getProperty("java_path"));
                 }
 
-                final Process installer = start = new ProcessBuilder(new String[]{javaStart, "-jar", Config.installerFile, "nogui", "--installServer"}).directory(Config.rootFolder).start();
+                final Process installer = start = new ProcessBuilder(new String[]{javaStart, "-jar", Config.installerFile, "nogui", "--installServer"}).directory(Config.rootFolder).redirectErrorStream(true).start();
                 final Scanner serverLog = new Scanner(start.getInputStream());
                 while (serverLog.hasNextLine()) {
                     final String println = serverLog.nextLine();
@@ -460,8 +460,8 @@ public class Loader {
                 Matcher matcher = Config.Pattern_Forge_startfile.matcher(matchingFile.getName());
 
                 if ( matcher.matches() ) {
-                    Config.minecraftVersion =  matcher.group(1);
-                    Config.loaderVersion = matcher.group(2);
+                    Config.minecraftVersion = matcher.group("minecraftVersion");
+                    Config.loaderVersion = matcher.group("loaderVersion");
                     Config.startupFile = matchingFile.getName();
                     LogInfo("Found Minecraft: " + Config.minecraftVersion + " with Forge " + Config.loaderVersion);
                     return;

@@ -174,8 +174,9 @@ public class Data {
     }
 
     public static String CurrentTime() {
-        if (!Config.configProps.getProperty("timezone").equals("UTC")) {
-            ZoneId z = ZoneId.of(Config.configProps.getProperty("timezone"));
+        String timezone = Config.configProps.getProperty("timezone", "UTC");
+        if (timezone != null && !timezone.equals("UTC")) {
+            ZoneId z = ZoneId.of(timezone);
             return "[" + ZonedDateTime.now(z).format(DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT)) + "] ";
         } else {
             return "[" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT)) + "] ";
@@ -188,10 +189,10 @@ public class Data {
 
     public static void doLog(final String message) throws IOException {
         if (Objects.equals(Config.configProps.getProperty("log_to_file"), "true")) {
-            FileWriter fileWriter = new FileWriter("logs/server-starter.log", true); //Set true for append mode
-            PrintWriter printWriter = new PrintWriter(fileWriter);
-            printWriter.println(message);  //New line
-            printWriter.close();
+            try (FileWriter fileWriter = new FileWriter("logs/server-starter.log", true);
+                 PrintWriter printWriter = new PrintWriter(fileWriter)) {
+                printWriter.println(message);  //New line
+            }
         }
     }
 
