@@ -32,8 +32,18 @@ jobs:
         run: |
           VERSION="${{ github.event.release.tag_name }}"
           VERSION="${VERSION#v}"
-          echo "Setting version to: $VERSION"
-          sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" res/modInfo.json
+          CURRENT=$(grep -oP '"version":\s*"\K[^"]+' res/modInfo.json)
+          if [ "$CURRENT" != "$VERSION" ]; then
+            echo "Updating version: $CURRENT -> $VERSION"
+            sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" res/modInfo.json
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add res/modInfo.json
+            git commit -m "chore: bump version to $VERSION [skip ci]"
+            git push origin HEAD:master
+          else
+            echo "Version already $VERSION, no update needed."
+          fi
           cat res/modInfo.json
 
       - name: Compile Java sources
