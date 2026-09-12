@@ -14,9 +14,25 @@ Thank you for your interest in improving Forge Server Starter!
 
 ## Build Requirements
 
-- Java 17+ (for building)
-- Maven 3.8+
-- The output JAR is compatible with Java 8+
+- Java 8+ runtime (the output JAR is Java 8-compatible)
+- Maven 3.8+ **or** the provided `build.bat` / `build.sh` scripts
+
+## Building Locally
+
+Without Maven installed, run the manual build scripts:
+
+- Windows: `build.bat`
+- Linux/macOS: `./build.sh`
+
+This builds `out/compiled/minecraft_server.jar`.
+
+With Maven installed:
+
+```bash
+mvn package
+```
+
+The shaded JAR is then available at `target/minecraft_server.jar`.
 
 ## Project Structure
 
@@ -24,6 +40,7 @@ Thank you for your interest in improving Forge Server Starter!
 - `res/` — bundled resources (config templates, modInfo.json)
 - `src/test/` — manual smoke tests
 - `pom.xml` — Maven build configuration
+- `build.bat` / `build.sh` — manual build without Maven
 
 ## Releasing
 
