@@ -26,7 +26,9 @@ public class ManualTests {
         testGetJsonValueSimple();
         testFileOperationBinaryVsText();
         testForgePattern();
+        testForgeLegacyPattern();
         testNeoForgePatternFourPart();
+        testNeoForgePatternModern();
         testForgeStartfilePattern();
 
         System.out.println("---");
@@ -84,6 +86,19 @@ public class ManualTests {
         assertTrue(m.find(), "Forge installer pattern matches");
         assertEquals("1.20.4", m.group(1), "Forge pattern minecraft version");
         assertEquals("49.0.3", m.group(2), "Forge pattern loader version");
+    }
+
+    static void testForgeLegacyPattern() {
+        Pattern p = Config.Pattern_Forge;
+        Matcher m = p.matcher("forge-1.12.2-14.23.5.2859-universal.jar");
+        assertTrue(m.find(), "Forge 1.12.2 universal pattern matches");
+        assertEquals("1.12.2", m.group(1), "Forge legacy pattern minecraft version");
+    }
+
+    static void testNeoForgePatternModern() {
+        Pattern p = Config.Pattern_NeoForge;
+        Matcher m = p.matcher("neoforge-21.1.2-installer.jar");
+        assertTrue(m.find(), "NeoForge modern 3-part pattern matches");
     }
 
     static void testNeoForgePatternFourPart() {
