@@ -30,7 +30,7 @@ jobs:
         run: |
           VERSION="${{ github.event.release.tag_name }}"
           VERSION="${VERSION#v}"
-          sed -i "0,/<version>[^<]*<\/version>/s/<version>[^<]*<\/version>/<version>$VERSION<\/version>/" pom.xml
+          sed -i '/<artifactId>forge-server-starter<\/artifactId>/{n;s/<version>[^<]*<\/version>/<version>'"$VERSION"'<\/version>/}' pom.xml
           sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" res/modInfo.json
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
