@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.6.3] - 2026-09-13
+
+### Fixed
+- Network check now uses 1.1.1.1:443 and 8.8.8.8:443 with a simpler, sequential socket check
+- Network check timeout reduced to 1.5 seconds with better debug logging
+- Remote JSON load failures are now warnings instead of hard errors
+- `mvn versions:set` replaced by Python XML parser for safer pom.xml version updates
+- `minecraft_server.jar` (without version) is also uploaded to releases
+
 ## [3.6.2] - 2026-09-12
 
 ### Fixed
