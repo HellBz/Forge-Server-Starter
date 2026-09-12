@@ -79,13 +79,12 @@ public class ServerStarter {
             }
         }
 
-        //No Internet Connection, only manually installation
+        //Check for updates if internet is available, otherwise start offline
         if (!Config.startupError) {
-            if (!Net.isConnected && Config.isNetworkCheckEnabled()) {
-                LogInfo("Place your Forge-Installer-JAR directly next to the current JAR.");
-                Config.startupError = true;
-            } else if (Net.isConnected) {
+            if (Net.isConnected) {
                 Remote.checkForUpdate();
+            } else if (Config.isNetworkCheckEnabled()) {
+                LogWarning("No internet connection, starting in offline mode. Place your Forge-Installer-JAR next to this JAR if needed.");
             } else {
                 LogInfo("Network-Check is disabled, skipping update check. Trying offline start ...");
             }

@@ -57,7 +57,7 @@ public class Net {
 
     private static Boolean canReachHost(String host) {
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(host, 53), 750);
+            socket.connect(new InetSocketAddress(host, 443), 750);
             return true;
         } catch (IOException e) {
             return false;
