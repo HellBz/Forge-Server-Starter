@@ -106,8 +106,25 @@ public class FileOperation {
     /**
      * Downloads a file from URL with proper HTTP handling.
      * Binary files (JAR, ZIP) are saved using raw byte streaming.
+     * Retries automatically on 5xx server errors.
      */
     private static FileOperation downloadFromUrl(String urlString, String destinationPath) {
+        int maxRetries = 2;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            FileOperation result = downloadFromUrlOnce(urlString, destinationPath, attempt);
+            int code = result.getResponseCode();
+            if (code < 500 || attempt == maxRetries) {
+                return result;
+            }
+            Data.LogWarning("Download attempt " + attempt + " returned HTTP " + code + ", retrying ...");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {}
+        }
+        return new FileOperation(500, null, "Download failed after " + maxRetries + " attempts");
+    }
+
+    private static FileOperation downloadFromUrlOnce(String urlString, String destinationPath, int attempt) {
         HttpURLConnection connection = null;
         try {
             URL url = new URL(urlString);
