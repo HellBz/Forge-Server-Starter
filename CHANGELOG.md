@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.6.2] - 2026-09-12
+
+### Fixed
+- Network check now uses a 2-second timeout per host to avoid long DNS hangs
+- `java_path` is validated before use, falls back to `java` if not found
+- Download retry on HTTP 5xx errors
+- CI workflow only updates the project version, not dependency versions
+
 ## [3.6.1] - 2026-09-12
 
 ### Added
