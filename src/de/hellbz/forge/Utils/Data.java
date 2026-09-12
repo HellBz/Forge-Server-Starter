@@ -189,7 +189,19 @@ public class Data {
 
     public static void doLog(final String message) throws IOException {
         if (Config.isLogToFileEnabled()) {
-            try (FileWriter fileWriter = new FileWriter("logs/server-starter.log", true);
+            String logFile = "logs/server-starter.log";
+            File file = new File(logFile);
+            long maxSize = 5L * 1024 * 1024; // 5 MB
+
+            if (file.exists() && file.length() > maxSize) {
+                File old = new File("logs/server-starter.log.1");
+                if (old.exists()) {
+                    old.delete();
+                }
+                file.renameTo(old);
+            }
+
+            try (FileWriter fileWriter = new FileWriter(logFile, true);
                  PrintWriter printWriter = new PrintWriter(fileWriter)) {
                 printWriter.println(message);  //New line
             }
