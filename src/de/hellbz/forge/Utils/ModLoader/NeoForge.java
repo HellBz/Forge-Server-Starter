@@ -89,16 +89,16 @@ public class NeoForge {
                     return NeoVersions;
 
                 } catch (Exception e) {
-                    LogError("Invalid JSON format.");
-                    e.printStackTrace();
+                    LogWarning("Invalid JSON format.");
+                    Data.LogDebug(e.getMessage());
                     return null;
                 }
             } else {
-                LogError("Failed to load JSON.");
+                LogWarning("Failed to load JSON.");
                 return null;
             }
         } else {
-            LogError("Fehler beim Lesen der Remote-Datei. Response-Code: " + getVersionJSON.getResponseCode());
+            LogWarning("Could not read remote file. Response-Code: " + getVersionJSON.getResponseCode() + ", continuing offline.");
             return null;
         }
     }
