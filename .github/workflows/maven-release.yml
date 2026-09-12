@@ -1,0 +1,115 @@
+name: Maven Build and Release
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Update version in pom.xml and modInfo.json from tag
+        if: github.event_name == 'release'
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          sed -i "s|<version>[^<]*</version>|<version>$VERSION</version>|" pom.xml
+          sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" res/modInfo.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pom.xml res/modInfo.json
+          git diff --cached --quiet || (git commit -m "chore: bump version to $VERSION [skip ci]" && git push origin HEAD:master)
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+
+      - name: Upload JAR as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: minecraft_server
+          path: target/minecraft_server.jar
+          retention-days: 30
+
+      - name: Prepare release bundle
+        if: github.event_name == 'release'
+        id: prep
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${{ github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+
+          STAGE="release_bundle"
+          mkdir -p "$STAGE"
+
+          DEST_JAR="$STAGE/minecraft_server-${VERSION}.jar"
+          cp target/minecraft_server.jar "$DEST_JAR"
+
+          cat > "$STAGE/start.sh" << 'SH'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+          : "${JAVA_CMD:=java}"
+          : "${JAVA_OPTS:=-Xms1G -Xmx2G}"
+          exec "$JAVA_CMD" $JAVA_OPTS -jar "$DIR/REPLACE_JAR" nogui
+          SH
+          chmod +x "$STAGE/start.sh"
+          sed -i "s|REPLACE_JAR|minecraft_server-${VERSION}.jar|g" "$STAGE/start.sh"
+
+          cat > "$STAGE/start.bat" << 'BAT'
+          @echo off
+          setlocal
+          if "%JAVA_CMD%"=="" set "JAVA_CMD=java"
+          if "%JAVA_OPTS%"=="" set "JAVA_OPTS=-Xms1G -Xmx2G"
+          set "SCRIPT_DIR=%~dp0"
+          "%JAVA_CMD%" %JAVA_OPTS% -jar "%SCRIPT_DIR%REPLACE_JAR" nogui
+          endlocal
+          BAT
+          sed -i "s|REPLACE_JAR|minecraft_server-${VERSION}.jar|g" "$STAGE/start.bat"
+
+          cat > "$STAGE/README.txt" <<TXT
+          Forge Server Starter - ${VERSION}
+
+          How to run:
+          - Windows: double-click start.bat (or run in a terminal).
+          - Linux/macOS: chmod +x start.sh  (first time), then ./start.sh
+
+          Override memory: set JAVA_OPTS=-Xms2G -Xmx4G before running.
+          TXT
+
+          (cd "$STAGE" && sha256sum * > SHA256SUMS.txt)
+
+          ZIP_NAME="minecraft_server-${VERSION}.zip"
+          zip -r "$ZIP_NAME" "$STAGE" >/dev/null
+
+          echo "version=$VERSION"    >> "$GITHUB_OUTPUT"
+          echo "zip=$ZIP_NAME"       >> "$GITHUB_OUTPUT"
+          echo "jar=$DEST_JAR"       >> "$GITHUB_OUTPUT"
+
+      - name: Upload ZIP and JAR to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ steps.prep.outputs.zip }}
+            ${{ steps.prep.outputs.jar }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
