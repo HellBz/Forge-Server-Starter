@@ -39,7 +39,7 @@ public class Net {
             for (String host : hosts) {
                 Future<Boolean> future = executor.submit(() -> canReachHost(host));
                 try {
-                    if (future.get(2, TimeUnit.SECONDS)) {
+                    if (future.get(500, TimeUnit.MILLISECONDS)) {
                         isConnected = true;
                         return;
                     }
@@ -57,7 +57,7 @@ public class Net {
 
     private static Boolean canReachHost(String host) {
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(host, 80), 1500);
+            socket.connect(new InetSocketAddress(host, 80), 750);
             return true;
         } catch (IOException e) {
             return false;
