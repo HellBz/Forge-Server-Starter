@@ -211,6 +211,11 @@ public class Loader {
             return false;
         }
 
+        if (!isJavaVersionSufficient()) {
+            Config.startupError = true;
+            return false;
+        }
+
         Map<String, String> links = null;
         if (!Config.isForge) {
             links = NeoForge.getFileLinks(Config.loaderVersion);
@@ -229,6 +234,48 @@ public class Loader {
                 return false;
             }
         } else return false;
+    }
+
+    private static boolean isJavaVersionSufficient() {
+        Data.VersionComparator vc = new Data.VersionComparator();
+        int requiredClassVersion;
+        String requiredJava;
+
+        if (!Config.isForge) {
+            // NeoForge
+            if (vc.compare(Config.minecraftVersion, "1.21.1") >= 0) {
+                requiredClassVersion = 65; // Java 21
+                requiredJava = "21";
+            } else if (vc.compare(Config.minecraftVersion, "1.20.4") >= 0) {
+                requiredClassVersion = 61; // Java 17
+                requiredJava = "17";
+            } else {
+                requiredClassVersion = 52; // Java 8
+                requiredJava = "8";
+            }
+        } else {
+            // Forge
+            if (vc.compare(Config.minecraftVersion, "1.18.0") >= 0) {
+                requiredClassVersion = 61; // Java 17
+                requiredJava = "17";
+            } else if (vc.compare(Config.minecraftVersion, "1.17.0") >= 0) {
+                requiredClassVersion = 60; // Java 16
+                requiredJava = "16";
+            } else {
+                requiredClassVersion = 52; // Java 8
+                requiredJava = "8";
+            }
+        }
+
+        if (Config.javaVersion < requiredClassVersion) {
+            Data.LogError("Java " + requiredJava + " or newer is required for "
+                    + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion
+                    + " (Minecraft " + Config.minecraftVersion + "). Your Java class version: " + Config.javaVersion + ".");
+            Data.LogError("Install a newer Java version and set it in server_starter.conf (java_path=...) or PATH.");
+            return false;
+        }
+
+        return true;
     }
 
     public static boolean checkLocalInstaller() {
