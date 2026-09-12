@@ -57,30 +57,20 @@ unique_id_request=true        # Set to false to disable update API calls
 
 ## What's New?
 
-### 3.6.0 Update
-- **Network Check Toggle** — `network_check=false` in config to skip internet check on startup
+See the full [CHANGELOG.md](CHANGELOG.md) for a detailed version history.
+
+Highlights of the latest release:
+- **Network Check Toggle** — `network_check=false` to skip internet check
 - **Faster Restart** — `/restart` command for fast server restarts
-- **Auto Loader Update** — `auto_update_loader=true` for automatic Forge/NeoForge updates
-- **Java 21/25 Support** — Updated class version check for modern Java
-- **1.7.10 Support** — Legacy Forge file names recognized correctly
-- **Binary Download Fix** — Installer JARs no longer corrupted during download
-- **NeoForge 26.x Support** — 4-segment versions and correct MC version mapping
-- **Console Fix (Java 17+)** — stdin forwarding fixed for modern Java
-- **Guided Install Fixes** — `latest`/`recommended` keywords work correctly, loader type selectable
-- **CI/CD Pipeline** — Automated build and release via GitHub Actions
+- **Auto Loader Update** — `auto_update_loader=true` for automatic updates
+- **Java 21/25 Support** — modern Java compatibility
+- **NeoForge 26.x Support** — 4-segment versions and correct mapping
+- **Binary Download Fix** — installer JARs no longer corrupted
+- **CI/CD Pipeline** — automated Maven build and release
 
-### 3.5 Update
-- **Forge and NeoForged Support** — `forge-auto-install.txt` with `loaderType` for easy selection
-- **Updated Variables** — Streamlined to `minecraftVersion` and `loaderVersion`
-- **Version Checker** — Automated update notifications via GitHub
+## Contributing
 
-### 3.0 Update
-- **Guided Installation** — Install Forge interactively via the console
-- **Automatic Forge Installation** — Automatic installation with `forge-auto-install.txt`
-
-### CE22 Update
-- **Simplified Upload** — Only upload the Forge-Installer-JAR (no more `libraries` folder)
-- **Automatic Setup** — Rename to `minecraft_server.jar` and everything is handled on start
+Want to help? Please read [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and release details.
 
 ## Credits
 
