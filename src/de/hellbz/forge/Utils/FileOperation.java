@@ -133,7 +133,7 @@ public class FileOperation {
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent",
-                    "Forge-Server-Starter/3.6 (Java/" + System.getProperty("java.version") + ")");
+                    "Forge-Server-Starter/" + Data.getAppVersion() + " (Java/" + System.getProperty("java.version") + ")");
             connection.setRequestProperty("Accept", "application/java-archive, application/zip, application/json, text/plain, */*");
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(60000); // JAR downloads can be slow

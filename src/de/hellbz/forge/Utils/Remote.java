@@ -175,7 +175,7 @@ public class Remote {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-        connection.setRequestProperty("User-Agent", "Forge-Server-Starter/3.6 (Java/" + System.getProperty("java.version") + ")");
+        connection.setRequestProperty("User-Agent", "Forge-Server-Starter/" + Data.getAppVersion() + " (Java/" + System.getProperty("java.version") + ")");
         connection.setConnectTimeout(10000);
         connection.setReadTimeout(10000);
 

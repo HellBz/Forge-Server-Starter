@@ -29,6 +29,30 @@ import java.util.*;
 
 public class Data {
 
+    private static String appVersion = null;
+
+    public static synchronized String getAppVersion() {
+        if (appVersion == null) {
+            appVersion = readAppVersion();
+        }
+        return appVersion;
+    }
+
+    private static String readAppVersion() {
+        try {
+            FileOperation result = FileOperation.downloadOrReadFile("/res/modInfo.json");
+            if (result != null && result.getResponseCode() == 200 && result.getContent() != null) {
+                String v = getJsonValue((String) result.getContent(), "version");
+                if (v != null && !v.isEmpty()) {
+                    return v;
+                }
+            }
+        } catch (Exception ignored) {
+            // Fallback to unknown
+        }
+        return "unknown";
+    }
+
     // Define Text Colors
     public static final String TXT_RESET = "\u001B[0m";
     public static final String TXT_BLACK = "\u001B[30m";
