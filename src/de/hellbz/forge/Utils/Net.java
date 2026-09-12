@@ -32,7 +32,7 @@ public class Net {
     }
 
     public static void checkInternetConnection() {
-        String[] hosts = {"www.google.com", "www.github.com"};
+        String[] hosts = {"files.minecraftforge.net", "maven.neoforged.net"};
         ExecutorService executor = Executors.newFixedThreadPool(hosts.length);
 
         try {
