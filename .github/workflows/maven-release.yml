@@ -30,7 +30,20 @@ jobs:
         run: |
           VERSION="${{ github.event.release.tag_name }}"
           VERSION="${VERSION#v}"
-          sed -i '/<artifactId>forge-server-starter<\/artifactId>/{n;s/<version>[^<]*<\/version>/<version>'"$VERSION"'<\/version>/}' pom.xml
+          python3 - << PY
+          import xml.etree.ElementTree as ET
+
+          NS = {'m': 'http://maven.apache.org/POM/4.0.0'}
+          ET.register_namespace('', 'http://maven.apache.org/POM/4.0.0')
+
+          tree = ET.parse('pom.xml')
+          root = tree.getroot()
+          version = root.find('m:version', NS)
+          if version is not None:
+              version.text = '$VERSION'
+          tree.write('pom.xml', xml_declaration=True, encoding='UTF-8')
+          PY
+
           sed -i "s/\"version\": *\"[^\"]*\"/\"version\": \"$VERSION\"/" res/modInfo.json
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
