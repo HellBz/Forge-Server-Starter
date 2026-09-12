@@ -32,7 +32,7 @@ public class Net {
     }
 
     public static void checkInternetConnection() {
-        String[] hosts = {"files.minecraftforge.net", "maven.neoforged.net"};
+        String[] hosts = {"1.1.1.1", "8.8.8.8"};
         ExecutorService executor = Executors.newFixedThreadPool(hosts.length);
 
         try {
@@ -57,7 +57,7 @@ public class Net {
 
     private static Boolean canReachHost(String host) {
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(host, 80), 750);
+            socket.connect(new InetSocketAddress(host, 53), 750);
             return true;
         } catch (IOException e) {
             return false;
