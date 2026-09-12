@@ -1,5 +1,3 @@
-package de.hellbz.forge;
-
 import de.hellbz.forge.Utils.Config;
 import de.hellbz.forge.Utils.Data;
 import de.hellbz.forge.Utils.FileOperation;
@@ -12,8 +10,8 @@ import java.util.regex.Pattern;
 
 /**
  * Simple smoke tests that can be run manually:
- *   javac -cp "libs/json-20230618.jar;libs/jsoup-1.17.2.jar;build/classes" -d build/test src/test/java/de/hellbz/forge/ManualTests.java
- *   java -cp "libs/json-20230618.jar;libs/jsoup-1.17.2.jar;build/test" de.hellbz.forge.ManualTests
+ *   javac -cp "libs/json-20230618.jar;libs/jsoup-1.17.2.jar;build/classes" -d build/test src/test/ManualTests.java
+ *   java -cp "libs/json-20230618.jar;libs/jsoup-1.17.2.jar;build/test" ManualTests
  */
 public class ManualTests {
 
