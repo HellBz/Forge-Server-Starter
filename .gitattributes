@@ -1,0 +1,8 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts must keep LF line endings for shebang on Linux/macOS
+*.sh text eol=lf
+
+# Windows batch files keep CRLF
+*.bat text eol=crlf
