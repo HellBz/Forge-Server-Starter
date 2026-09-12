@@ -115,60 +115,7 @@ public class ServerStarter {
         }
 
         if (!Config.startupError) {
-
-            if (Document.checkExist(Config.startupFile)) {
-                checkContent(Config.startupFile);
-                LogInfo("Building Startup-Parameter ...");
-
-                List<String> where = new ArrayList<>();
-                String javaPath = Config.getJavaPath();
-                String timezone = Config.getTimezone();
-
-                if (javaPath != null && !javaPath.equals("java")) {
-                    where.add(javaPath);
-                    LogDebug("Use Custom Java Path: " + javaPath);
-                } else {
-                    where.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
-                    LogDebug("Use Standard Java Path");
-                }
-
-                if (timezone != null && !timezone.isEmpty()) {
-                    if (!timezone.equals("UTC")) {
-                        where.add("-Duser.timezone=" + timezone);
-                    }
-                }
-
-                LogDebug(Config.startupFile);
-
-                if (Config.startupFile.endsWith(".jar")) {
-                    where.add("-jar");
-                    Collections.addAll(where, Config.startupParameter);
-                    where.add(Config.startupFile);
-                } else {
-                    File installerFileJavaArgs = new File(Config.rootFolder + File.separator + "user_jvm_args.txt");
-                    if (installerFileJavaArgs.exists()) {
-                        where.add("@user_jvm_args.txt");
-                    } else {
-                        Collections.addAll(where, Config.startupParameter);
-                    }
-                    where.add("@" + System.getProperty("user.dir") + File.separator + Config.startupFile);
-
-                    // Java class version check - updated for Java 21+ and Java 25+
-                    // Java 17 = 61, Java 21 = 65, Java 25 = 69
-                    if (Config.javaVersion < 61) {
-                        LogWarning("The Java-Class-Version is with \"" + Config.javaVersion + "\" too low to start the Server!");
-                        LogWarning("Minimum required: Java 17 (class version 61). Your version: class version " + Config.javaVersion);
-                        Config.startupError = true;
-                    }
-                }
-
-                where.add("nogui");
-
-                Config.CMD_ARRAY = new String[where.size()];
-                where.toArray(Config.CMD_ARRAY);
-            } else {
-                LogWarning("The Start-File \"" + Config.startupFile + "\" does not exist!");
-            }
+            buildCommandLine();
         }
 
         //Check Eula-File
@@ -185,6 +132,63 @@ public class ServerStarter {
             LogError("-----------------------------------------------");
             System.exit(-1);
         }
+    }
+
+    private static void buildCommandLine() {
+        if (!Document.checkExist(Config.startupFile)) {
+            LogWarning("The Start-File \"" + Config.startupFile + "\" does not exist!");
+            return;
+        }
+
+        checkContent(Config.startupFile);
+        LogInfo("Building Startup-Parameter ...");
+
+        List<String> where = new ArrayList<>();
+        String javaPath = Config.getJavaPath();
+        String timezone = Config.getTimezone();
+
+        if (javaPath != null && !javaPath.equals("java")) {
+            where.add(javaPath);
+            LogDebug("Use Custom Java Path: " + javaPath);
+        } else {
+            where.add(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java");
+            LogDebug("Use Standard Java Path");
+        }
+
+        if (timezone != null && !timezone.isEmpty()) {
+            if (!timezone.equals("UTC")) {
+                where.add("-Duser.timezone=" + timezone);
+            }
+        }
+
+        LogDebug(Config.startupFile);
+
+        if (Config.startupFile.endsWith(".jar")) {
+            where.add("-jar");
+            Collections.addAll(where, Config.startupParameter);
+            where.add(Config.startupFile);
+        } else {
+            File installerFileJavaArgs = new File(Config.rootFolder + File.separator + "user_jvm_args.txt");
+            if (installerFileJavaArgs.exists()) {
+                where.add("@user_jvm_args.txt");
+            } else {
+                Collections.addAll(where, Config.startupParameter);
+            }
+            where.add("@" + System.getProperty("user.dir") + File.separator + Config.startupFile);
+
+            // Java class version check - updated for Java 21+ and Java 25+
+            // Java 17 = 61, Java 21 = 65, Java 25 = 69
+            if (Config.javaVersion < 61) {
+                LogWarning("The Java-Class-Version is with \"" + Config.javaVersion + "\" too low to start the Server!");
+                LogWarning("Minimum required: Java 17 (class version 61). Your version: class version " + Config.javaVersion);
+                Config.startupError = true;
+            }
+        }
+
+        where.add("nogui");
+
+        Config.CMD_ARRAY = new String[where.size()];
+        where.toArray(Config.CMD_ARRAY);
     }
 
     private static void startServer() throws IOException, InterruptedException {
