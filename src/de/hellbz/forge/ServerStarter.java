@@ -241,7 +241,9 @@ public class ServerStarter {
                                 OutputStream out = serverProcess.getOutputStream();
                                 out.write(("stop\n").getBytes());
                                 out.flush();
-                            } catch (IOException ignored) {}
+                            } catch (IOException ignored) {
+                                // server process already closed
+                            }
                             continue;
                         }
                         serverWriter.println(line);
@@ -271,7 +273,9 @@ public class ServerStarter {
                                 OutputStream out = serverProcess.getOutputStream();
                                 out.write(("stop\n").getBytes());
                                 out.flush();
-                            } catch (IOException ignored) {}
+                            } catch (IOException ignored) {
+                                // server process already closed
+                            }
                         }
                     }
                 } catch (IOException e) {

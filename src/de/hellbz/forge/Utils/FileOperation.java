@@ -119,7 +119,9 @@ public class FileOperation {
             Data.LogWarning("Download attempt " + attempt + " returned HTTP " + code + ", retrying ...");
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException ignored) {}
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
         }
         return new FileOperation(500, null, "Download failed after " + maxRetries + " attempts");
     }
@@ -162,7 +164,9 @@ public class FileOperation {
         } catch (IOException e) {
             int code = 500;
             if (connection != null) {
-                try { code = connection.getResponseCode(); } catch (IOException ignored) {}
+                try { code = connection.getResponseCode(); } catch (IOException ignored) {
+                    // Already in exception handler; keep default 500
+                }
             }
             return new FileOperation(code, null, "Download failed: " + e.getMessage());
         } finally {
