@@ -1,7 +1,7 @@
 .idea
 build/
 out/
-test/
+/test/
 server_starter.conf
 !res/server_starter.conf
 /src/de/hellbz/forge/Utils/NotInUse/*
