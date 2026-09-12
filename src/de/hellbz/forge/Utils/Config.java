@@ -104,34 +104,58 @@ public class Config {
         return value != null ? value.equalsIgnoreCase("true") : defaultValue;
     }
 
+    /**
+     * Returns the configured timezone or "UTC" by default.
+     */
     public static String getTimezone() {
         return getString("timezone", "UTC");
     }
 
+    /**
+     * Returns the configured Java command or "java" by default.
+     */
     public static String getJavaPath() {
         return getString("java_path", "java");
     }
 
+    /**
+     * Returns true if debug logging is enabled.
+     */
     public static boolean isDebugEnabled() {
         return getBoolean("debug", false);
     }
 
+    /**
+     * Returns true if file logging is enabled.
+     */
     public static boolean isLogToFileEnabled() {
         return getBoolean("log_to_file", true);
     }
 
+    /**
+     * Returns true if the startup internet check should run.
+     */
     public static boolean isNetworkCheckEnabled() {
         return getBoolean("network_check", true);
     }
 
+    /**
+     * Returns true if the loader should auto-update to the latest version.
+     */
     public static boolean isAutoUpdateLoaderEnabled() {
         return getBoolean("auto_update_loader", false);
     }
 
+    /**
+     * Returns true if the unique ID should be sent to the update API.
+     */
     public static boolean isUniqueIdRequestEnabled() {
         return getBoolean("unique_id_request", true);
     }
 
+    /**
+     * Returns the configured unique ID or an empty string.
+     */
     public static String getUniqueId() {
         return getString("unique_id", "");
     }
