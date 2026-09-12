@@ -343,6 +343,10 @@ public class Loader {
                 LogInfo("Check log from installer for more information");
 
                 String javaStart = Config.getJavaPath();
+                if (javaStart != null && !javaStart.equals("java") && !new java.io.File(javaStart).exists()) {
+                    LogWarning("Configured java_path \"" + javaStart + "\" not found for installer. Using \"java\" instead.");
+                    javaStart = "java";
+                }
                 if (javaStart != null && !javaStart.equals("java")) {
                     LogDebug("Use for Installer Custom Java Path: " + javaStart);
                 }

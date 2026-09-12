@@ -147,6 +147,11 @@ public class ServerStarter {
         String javaPath = Config.getJavaPath();
         String timezone = Config.getTimezone();
 
+        if (javaPath != null && !javaPath.equals("java") && !new File(javaPath).exists()) {
+            LogWarning("Configured java_path \"" + javaPath + "\" does not exist. Falling back to default Java.");
+            javaPath = "java";
+        }
+
         if (javaPath != null && !javaPath.equals("java")) {
             where.add(javaPath);
             LogDebug("Use Custom Java Path: " + javaPath);
