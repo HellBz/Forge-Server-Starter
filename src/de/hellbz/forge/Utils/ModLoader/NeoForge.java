@@ -29,8 +29,8 @@ public class NeoForge {
                     JSONObject jsonObject = new JSONObject(jsonString);
                     JSONArray versionsArray = jsonObject.getJSONArray("versions");
 
-                    Map<String, Map<String, Object>> NeoVersions = new TreeMap<>(Collections.reverseOrder(new Data.VersionComparator()));
-                    Data.VersionComparator versionComparator = new Data.VersionComparator();
+                    Map<String, Map<String, Object>> NeoVersions = new TreeMap<>(Collections.reverseOrder(new VersionComparator()));
+                    VersionComparator versionComparator = new VersionComparator();
 
                     for (int i = 0; i < versionsArray.length(); i++) {
                         String version = versionsArray.getString(i);
@@ -69,7 +69,7 @@ public class NeoForge {
                                 if (item instanceof String) {
                                     versionsList.add((String) item);
                                 } else {
-                                    Data.LogDebug("An element was not a String, has been skipped: " + item);
+                                    LogDebug("An element was not a String, has been skipped: " + item);
                                 }
                             }
                         }
