@@ -33,7 +33,7 @@ public class Loader {
             }
         } catch (Exception e) {
             Config.startupError = true;
-            LogWarning(e.getMessage());
+            LogWarning("Could not read files in server folder: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
         }
 
         java.io.File autoConfigFile = new java.io.File("forge-auto-install.txt");
@@ -60,25 +60,25 @@ public class Loader {
                     || Config.loaderVersion == null || Config.loaderVersion.trim().isEmpty()) {
 
                 FileOperation.downloadOrReadFile("/res/forge-auto-install.txt", Config.rootFolder + File.separator + "forge-auto-install.txt");
-                LogWarning("Found Error in the \"forge-auto-install.txt\", saved the File correct, please check the File.");
+                LogWarning("\"forge-auto-install.txt\" is missing or incomplete (minecraftVersion/loaderType/loaderVersion). A default file has been created.");
                 Config.startupError = true;
                 return false;
             }
 
             if (!Config.minecraftVersion.matches("(?i)^[0-9.]+$|^latest$")) {
-                LogWarning("The Setting minecraftVersion in \"forge-auto-install.txt\", must be \"1.20.4\" or \"latest\".");
+                LogWarning("\"minecraftVersion\" in \"forge-auto-install.txt\" must be a valid Minecraft version (e.g. \"1.20.4\") or \"latest\".");
                 Config.startupError = true;
                 return false;
             }
 
             if (!Config.loaderVersion.matches("(?i)^[0-9.]+$|^latest$|^recommended$")) {
-                LogWarning("The Setting loaderVersion in \"forge-auto-install.txt\", must be \"1.20.4\" or \"latest\" or \"recommended\".");
+                LogWarning("\"loaderVersion\" in \"forge-auto-install.txt\" must be a valid version number (e.g. \"1.20.4\"), \"latest\" or \"recommended\".");
                 Config.startupError = true;
                 return false;
             }
 
             if (!loaderType.matches("(?i)^forge$|^(neo)?forge$")) {
-                LogWarning("The Setting loaderType in \"forge-auto-install.txt\", must be \"forge\" or \"neoforge\".");
+                LogWarning("\"loaderType\" in \"forge-auto-install.txt\" must be \"forge\" or \"neoforge\".");
                 Config.startupError = true;
                 return false;
             }
@@ -115,7 +115,7 @@ public class Loader {
         } else {
 
             // GUIDED installation
-            LogWarning("Not found the \"forge-auto-install.txt\", start guided installation-Process.");
+            LogWarning("\"forge-auto-install.txt\" not found. Starting guided installation...");
 
             LogInfo("FORGE is available in the following Versions:");
             String ForgeVersionsAsString = String.join(", ", Config.forgeVersions.keySet());
@@ -138,7 +138,7 @@ public class Loader {
             Config.minecraftVersion = mcVersionInput;
 
             if (!Config.forgeVersions.containsKey(Config.minecraftVersion) && !Config.neoVersions.containsKey(Config.minecraftVersion)) {
-                LogError("The Minecraft-Version \"" + Config.minecraftVersion + "\" not exists, restart Downloader.");
+                LogError("Minecraft version \"" + Config.minecraftVersion + "\" is not available for Forge or NeoForge.");
                 checkLoaderVersion();
                 return false;
             }
@@ -206,7 +206,7 @@ public class Loader {
     public static boolean downloadLoader() {
 
         if (Config.minecraftVersion == null || Config.loaderVersion == null) {
-            LogWarning("One of the variables (minecraftVersion or loaderVersion) is not set properly.");
+            LogWarning("Loader version or Minecraft version is missing. Please use \"forge-auto-install.txt\" or guided installation.");
             Config.startupError = true;
             return false;
         }
@@ -278,7 +278,7 @@ public class Loader {
             }
         } catch (Exception e) {
             Config.startupError = true;
-            LogWarning(e.getMessage());
+            LogWarning("Could not read files in server folder: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
         }
         return false;
     }
@@ -333,18 +333,18 @@ public class Loader {
                     return false;
 
                 } else {
-                    LogWarning("Problem while installing FORGE, \"libraries\"-Folder not successfully created.");
+                    LogError("Forge/NeoForge installer finished, but the \"libraries\" folder was not created. The installer JAR may be corrupt or the Java version is incompatible.");
                     Config.startupError = true;
                     return true;
                 }
 
             } catch (IOException | InterruptedException e) {
-                LogWarning("Problem while installing Loader from " + Config.rootFolder + File.separator + ' ' + e);
+                LogWarning("Could not run the loader installer: " + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
                 Config.startupError = true;
                 return true;
             }
         } else {
-            LogWarning("No \"libraries\"-Folders and no Installer-File could be found!");
+            LogError("No installer file found and no \"libraries\" folder present. Place a Forge or NeoForge installer JAR next to the starter or use \"forge-auto-install.txt\".");
             Config.startupError = true;
             return true;
         }
@@ -459,7 +459,7 @@ public class Loader {
                 Data.LogDebug("Size: " + matchingFile.length() + " bytes");
                 Data.LogDebug("Last modified: " + matchingFile.lastModified());
             } else {
-                LogWarning("No Forge-Version could be Found!");
+                LogError("No valid Forge server start file found in the server folder.");
                 Config.startupError = true;
             }
         }
