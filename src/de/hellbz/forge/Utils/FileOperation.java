@@ -61,7 +61,8 @@ public class FileOperation {
 
     public static FileOperation downloadOrReadFile(File source, String destinationPath) {
         try (InputStream in = Files.newInputStream(source.toPath())) {
-            return readContent(in, destinationPath, isBinaryPath(source.getName()));
+            long size = Files.size(source.toPath());
+            return readContent(in, destinationPath, isBinaryPath(source.getName()), size);
         } catch (IOException e) {
             return new FileOperation(500, null, "File-Operation failed: " + e.getMessage());
         }
@@ -91,10 +92,12 @@ public class FileOperation {
         // Classpath resource or local file
         try {
             InputStream in = FileOperation.class.getResourceAsStream(source);
+            long size = -1;
             if (in == null) {
                 in = Files.newInputStream(Paths.get(source));
+                size = Files.size(Paths.get(source));
             }
-            return readContent(in, destinationPath, isBinaryPath(source));
+            return readContent(in, destinationPath, isBinaryPath(source), size);
         } catch (IOException e) {
             return new FileOperation(500, null, "File-Operation failed: " + e.getMessage());
         }
@@ -121,8 +124,9 @@ public class FileOperation {
 
             if (responseCode >= 200 && responseCode < 300) {
                 boolean binary = isBinaryPath(urlString) || isBinaryPath(destinationPath);
+                long size = connection.getContentLengthLong();
                 try (InputStream in = connection.getInputStream()) {
-                    return readContent(in, destinationPath, binary);
+                    return readContent(in, destinationPath, binary, size);
                 }
             } else {
                 String errorBody = null;
@@ -165,8 +169,9 @@ public class FileOperation {
      * @param in              the input stream
      * @param destinationPath where to save the file, or null to just return content
      * @param binary          if true, streams raw bytes (for JAR/ZIP); if false, decodes as UTF-8 text
+     * @param totalSize       total content length in bytes, or -1 if unknown
      */
-    private static FileOperation readContent(InputStream in, String destinationPath, boolean binary) throws IOException {
+    private static FileOperation readContent(InputStream in, String destinationPath, boolean binary, long totalSize) throws IOException {
         if (binary && destinationPath != null && !destinationPath.isEmpty()) {
             // Binary mode: stream raw bytes directly to file, no String conversion
             File dest = new File(destinationPath);
@@ -175,9 +180,26 @@ public class FileOperation {
                 byte[] buf = new byte[8192];
                 int read;
                 long total = 0;
+                long lastLog = 0;
+                long lastMbLog = -1;
                 while ((read = in.read(buf)) != -1) {
                     out.write(buf, 0, read);
                     total += read;
+
+                    // Progress logging
+                    if (totalSize > 0) {
+                        long percent = (total * 100) / totalSize;
+                        if (percent >= lastLog + 10) {
+                            Data.LogInfo("Download progress: " + percent + "% (" + (total / 1024 / 1024) + " / " + (totalSize / 1024 / 1024) + " MB)");
+                            lastLog = percent;
+                        }
+                    } else {
+                        long mb = total / 1024 / 1024;
+                        if (mb > lastMbLog) {
+                            Data.LogInfo("Downloaded: " + mb + " MB ...");
+                            lastMbLog = mb;
+                        }
+                    }
                 }
                 return new FileOperation(200, "Binary file saved (" + total + " bytes)", "File downloaded and saved");
             }
