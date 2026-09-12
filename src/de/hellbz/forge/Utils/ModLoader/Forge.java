@@ -54,7 +54,7 @@ public class Forge {
 
                 } catch (Exception e) {
                     LogWarning("Invalid JSON format.");
-                    Data.LogDebug(e.getMessage());
+                    LogDebug(e.getMessage());
                     return null;
                 }
             } else {

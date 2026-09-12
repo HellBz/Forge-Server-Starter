@@ -1,13 +1,12 @@
 package de.hellbz.forge.Utils.ModLoader;
 
-import de.hellbz.forge.Utils.Data;
 import de.hellbz.forge.Utils.FileOperation;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.*;
 
-import static de.hellbz.forge.Utils.Data.LogError;
+import static de.hellbz.forge.Utils.Data.*;
 
 public class NeoForge {
 
@@ -90,7 +89,7 @@ public class NeoForge {
 
                 } catch (Exception e) {
                     LogWarning("Invalid JSON format.");
-                    Data.LogDebug(e.getMessage());
+                    LogDebug(e.getMessage());
                     return null;
                 }
             } else {
