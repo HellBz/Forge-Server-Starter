@@ -177,113 +177,117 @@ public class ServerStarter {
         }
 
         if (!Config.startupError) {
-            if (Config.CMD_ARRAY != null) {
-                // Server restart loop - supports /restart command (Faster Restart feature)
-                boolean shouldRestart = true;
-                while (shouldRestart) {
-                    shouldRestart = false;
-
-                    LogInfo("");
-                    LogInfo("Server is Running in TimeZone: " + Config.getTimezone());
-                    LogInfo("Setup your own timezone in " + Config.PROPERTIES_FILE);
-                    LogInfo("");
-                    LogInfo("Start " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion + " Server");
-                    LogInfo("-----------------------------------------------");
-                    LogInfo("Tip: Type '/restart' in server console to trigger a fast restart.");
-                    LogInfo("-----------------------------------------------");
-
-                    LogDebug("Startup-ARRAY " + TXT_BLUE + Arrays.toString(Config.CMD_ARRAY) + TXT_RESET);
-
-                    ProcessBuilder pb = new ProcessBuilder(Config.CMD_ARRAY);
-                    pb.redirectErrorStream(true);
-
-                    Process serverProcess = pb.start();
-
-                    // Shared restart flag between stdin and stdout threads
-                    final boolean[] restartRequested = {false};
-
-                    // Thread to handle stdin forwarding (fixes Issue #18 - console broken with Java 17+)
-                    Thread stdinForwarder = new Thread(() -> {
-                        try {
-                            BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
-                            OutputStream serverInput = serverProcess.getOutputStream();
-                            PrintWriter serverWriter = new PrintWriter(new OutputStreamWriter(serverInput), true);
-                            String line;
-                            while ((line = consoleReader.readLine()) != null) {
-                                if (line.trim().equalsIgnoreCase("/restart")) {
-                                    restartRequested[0] = true;
-                                    LogInfo("Restart command detected from console - restarting server gracefully...");
-                                    try {
-                                        OutputStream out = serverProcess.getOutputStream();
-                                        out.write(("stop\n").getBytes());
-                                        out.flush();
-                                    } catch (IOException ignored) {}
-                                    continue;
-                                }
-                                serverWriter.println(line);
-                            }
-                        } catch (IOException e) {
-                            // console closed
-                        }
-                    });
-                    stdinForwarder.setDaemon(true);
-                    stdinForwarder.start();
-
-                    // Thread to handle stdout/stderr and detect /restart (Faster Restart feature)
-                    Thread stdoutReader = new Thread(() -> {
-                        try {
-                            BufferedReader reader = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                System.out.println(line);
-                                // Detect restart command issued by player or console
-                                if (line.toLowerCase().contains("issued server command: /restart")
-                                        || line.toLowerCase().contains("[f-s-s/restart]")
-                                        || line.contains("F-S-S: RESTART")) {
-                                    restartRequested[0] = true;
-                                    LogInfo("Restart command detected - restarting server gracefully...");
-                                    // Send stop command to server
-                                    try {
-                                        OutputStream out = serverProcess.getOutputStream();
-                                        out.write(("stop\n").getBytes());
-                                        out.flush();
-                                    } catch (IOException ignored) {}
-                                }
-                            }
-                        } catch (IOException e) {
-                            // process ended
-                        }
-                    });
-                    stdoutReader.setDaemon(false);
-                    stdoutReader.start();
-
-                    int exitCode = serverProcess.waitFor();
-                    stdoutReader.join(5000);
-
-                    if (restartRequested[0] || exitCode == Config.RESTART_EXIT_CODE) {
-                        LogWarning("Server is restarting...");
-                        LogInfo("-----------------------------------------------");
-                        shouldRestart = true;
-                    } else if (exitCode == 0) {
-                        LogWarning("Server is successfully stopped.");
-                        System.exit(0);
-                    } else {
-                        LogError("Server is Crashed with Exit-Code: " + exitCode);
-                        LogWarning("Please check your files and upload them to the server again if necessary.");
-                        LogError("EXIT Server-Starter ");
-                        System.exit(exitCode);
-                    }
-                }
-            } else {
-                Config.startupError = true;
-                LogWarning("Could not build Start-Parameter!");
-            }
+            startServer();
         }
 
         if (Config.startupError) {
             LogError("EXIT FORGE-Server-Starter ");
             LogError("-----------------------------------------------");
             System.exit(-1);
+        }
+    }
+
+    private static void startServer() throws IOException, InterruptedException {
+        if (Config.CMD_ARRAY == null) {
+            Config.startupError = true;
+            LogWarning("Could not build Start-Parameter!");
+            return;
+        }
+
+        boolean shouldRestart = true;
+        while (shouldRestart) {
+            shouldRestart = false;
+
+            LogInfo("");
+            LogInfo("Server is Running in TimeZone: " + Config.getTimezone());
+            LogInfo("Setup your own timezone in " + Config.PROPERTIES_FILE);
+            LogInfo("");
+            LogInfo("Start " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion + " Server");
+            LogInfo("-----------------------------------------------");
+            LogInfo("Tip: Type '/restart' in server console to trigger a fast restart.");
+            LogInfo("-----------------------------------------------");
+
+            LogDebug("Startup-ARRAY " + TXT_BLUE + Arrays.toString(Config.CMD_ARRAY) + TXT_RESET);
+
+            ProcessBuilder pb = new ProcessBuilder(Config.CMD_ARRAY);
+            pb.redirectErrorStream(true);
+
+            Process serverProcess = pb.start();
+
+            // Shared restart flag between stdin and stdout threads
+            final boolean[] restartRequested = {false};
+
+            // Thread to handle stdin forwarding (fixes Issue #18 - console broken with Java 17+)
+            Thread stdinForwarder = new Thread(() -> {
+                try {
+                    BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+                    OutputStream serverInput = serverProcess.getOutputStream();
+                    PrintWriter serverWriter = new PrintWriter(new OutputStreamWriter(serverInput), true);
+                    String line;
+                    while ((line = consoleReader.readLine()) != null) {
+                        if (line.trim().equalsIgnoreCase("/restart")) {
+                            restartRequested[0] = true;
+                            LogInfo("Restart command detected from console - restarting server gracefully...");
+                            try {
+                                OutputStream out = serverProcess.getOutputStream();
+                                out.write(("stop\n").getBytes());
+                                out.flush();
+                            } catch (IOException ignored) {}
+                            continue;
+                        }
+                        serverWriter.println(line);
+                    }
+                } catch (IOException e) {
+                    // console closed
+                }
+            });
+            stdinForwarder.setDaemon(true);
+            stdinForwarder.start();
+
+            // Thread to handle stdout/stderr and detect /restart (Faster Restart feature)
+            Thread stdoutReader = new Thread(() -> {
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println(line);
+                        // Detect restart command issued by player or console
+                        if (line.toLowerCase().contains("issued server command: /restart")
+                                || line.toLowerCase().contains("[f-s-s/restart]")
+                                || line.contains("F-S-S: RESTART")) {
+                            restartRequested[0] = true;
+                            LogInfo("Restart command detected - restarting server gracefully...");
+                            // Send stop command to server
+                            try {
+                                OutputStream out = serverProcess.getOutputStream();
+                                out.write(("stop\n").getBytes());
+                                out.flush();
+                            } catch (IOException ignored) {}
+                        }
+                    }
+                } catch (IOException e) {
+                    // process ended
+                }
+            });
+            stdoutReader.setDaemon(false);
+            stdoutReader.start();
+
+            int exitCode = serverProcess.waitFor();
+            stdoutReader.join(5000);
+
+            if (restartRequested[0] || exitCode == Config.RESTART_EXIT_CODE) {
+                LogWarning("Server is restarting...");
+                LogInfo("-----------------------------------------------");
+                shouldRestart = true;
+            } else if (exitCode == 0) {
+                LogWarning("Server is successfully stopped.");
+                System.exit(0);
+            } else {
+                LogError("Server is Crashed with Exit-Code: " + exitCode);
+                LogWarning("Please check your files and upload them to the server again if necessary.");
+                LogError("EXIT Server-Starter ");
+                System.exit(exitCode);
+            }
         }
     }
 }
