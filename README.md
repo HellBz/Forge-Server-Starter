@@ -41,6 +41,25 @@ loaderVersion=latest
 
 The Server Starter will download and install the loader automatically.
 
+## Building from Source
+
+If you just want to run the project, use the pre-built JAR from the [Releases](https://github.com/HellBz/Forge-Server-Starter/releases) page.
+
+To build locally without Maven:
+
+- **Windows:** `build.bat`
+- **Linux/macOS:** `./build.sh`
+
+Output: `out/compiled/minecraft_server.jar`
+
+With Maven installed:
+
+```bash
+mvn package
+```
+
+Output: `target/minecraft_server.jar`
+
 ## Configuration
 
 `server_starter.conf` is created on first start with these options:
