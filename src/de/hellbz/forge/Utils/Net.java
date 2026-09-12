@@ -5,6 +5,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.concurrent.*;
 
+import static de.hellbz.forge.Utils.Data.LogDebug;
 import static de.hellbz.forge.Utils.Data.LogInfo;
 import static de.hellbz.forge.Utils.Data.LogWarning;
 
@@ -43,8 +44,9 @@ public class Net {
                         return;
                     }
                 } catch (InterruptedException | ExecutionException e) {
-                    // host unreachable or DNS failed
+                    LogDebug("Could not reach " + host + ": " + e.getMessage());
                 } catch (TimeoutException e) {
+                    LogDebug("Timeout while checking " + host);
                     future.cancel(true);
                 }
             }
