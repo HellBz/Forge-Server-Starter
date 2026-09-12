@@ -60,6 +60,8 @@ jobs:
           STAGE="release_bundle"
           mkdir -p "$STAGE"
 
+          cp target/minecraft_server.jar "minecraft_server-${VERSION}.jar"
+          cp target/minecraft_server.jar "minecraft_server.jar"
           DEST_JAR="$STAGE/minecraft_server-${VERSION}.jar"
           cp target/minecraft_server.jar "$DEST_JAR"
 
@@ -100,9 +102,10 @@ jobs:
           ZIP_NAME="minecraft_server-${VERSION}.zip"
           zip -r "$ZIP_NAME" "$STAGE" >/dev/null
 
-          echo "version=$VERSION"    >> "$GITHUB_OUTPUT"
-          echo "zip=$ZIP_NAME"       >> "$GITHUB_OUTPUT"
-          echo "jar=$DEST_JAR"       >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION"              >> "$GITHUB_OUTPUT"
+          echo "zip=$ZIP_NAME"                   >> "$GITHUB_OUTPUT"
+          echo "jar=$DEST_JAR"                   >> "$GITHUB_OUTPUT"
+          echo "plain_jar=minecraft_server.jar"  >> "$GITHUB_OUTPUT"
 
       - name: Upload ZIP and JAR to release
         if: github.event_name == 'release'
@@ -111,5 +114,6 @@ jobs:
           files: |
             ${{ steps.prep.outputs.zip }}
             ${{ steps.prep.outputs.jar }}
+            ${{ steps.prep.outputs.plain_jar }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
