@@ -66,7 +66,7 @@ public class Document {
 
     /* AI optimized https://chat.openai.com/share/de913bc3-3958-477d-aefd-0a5387bda14a */
     public static void LogFile() {
-        if (Objects.equals(Config.configProps.getProperty("log_to_file"), "true")) {
+        if (Config.isLogToFileEnabled()) {
 
             String logFolder = "logs" + File.separator;
 

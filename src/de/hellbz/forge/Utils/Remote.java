@@ -33,7 +33,7 @@ public class Remote {
             return;
         }
 
-        if (Config.configProps.getProperty("unique_id_request", "true").equals("true")) {
+        if (Config.isUniqueIdRequestEnabled()) {
             try {
                 requestUniqueID(localVersion);
             } catch (IOException e) {
@@ -125,7 +125,7 @@ public class Remote {
 
     public static void requestUniqueID(String localVersion) throws IOException {
 
-        String uniqueId = Config.configProps.getProperty("unique_id", "");
+        String uniqueId = Config.getUniqueId();
 
         String response;
         try {

@@ -81,8 +81,7 @@ public class ServerStarter {
 
         //No Internet Connection, only manually installation
         if (!Config.startupError) {
-            String networkCheckSetting = Config.configProps.getProperty("network_check", "true");
-            if (!Net.isConnected && !networkCheckSetting.equalsIgnoreCase("false")) {
+            if (!Net.isConnected && Config.isNetworkCheckEnabled()) {
                 LogInfo("Place your Forge-Installer-JAR directly next to the current JAR.");
                 Config.startupError = true;
             } else if (Net.isConnected) {
@@ -122,8 +121,8 @@ public class ServerStarter {
                 LogInfo("Building Startup-Parameter ...");
 
                 List<String> where = new ArrayList<>();
-                String javaPath = Config.configProps.getProperty("java_path");
-                String timezone = Config.configProps.getProperty("timezone", "UTC");
+                String javaPath = Config.getJavaPath();
+                String timezone = Config.getTimezone();
 
                 if (javaPath != null && !javaPath.equals("java")) {
                     where.add(javaPath);
@@ -185,7 +184,7 @@ public class ServerStarter {
                     shouldRestart = false;
 
                     LogInfo("");
-                    LogInfo("Server is Running in TimeZone: " + Config.configProps.getProperty("timezone"));
+                    LogInfo("Server is Running in TimeZone: " + Config.getTimezone());
                     LogInfo("Setup your own timezone in " + Config.PROPERTIES_FILE);
                     LogInfo("");
                     LogInfo("Start " + (Config.isForge ? "Forge" : "NeoForge") + " " + Config.loaderVersion + " Server");

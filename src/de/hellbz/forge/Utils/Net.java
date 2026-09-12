@@ -13,9 +13,7 @@ public class Net {
 
     static {
 
-        String networkCheckSetting = Config.configProps.getProperty("network_check", "true");
-
-        if (networkCheckSetting.equalsIgnoreCase("false")) {
+        if (!Config.isNetworkCheckEnabled()) {
             isConnected = false;
             LogInfo("Checking Internet... Skipped (network_check=false in " + Config.PROPERTIES_FILE + ").");
         } else {

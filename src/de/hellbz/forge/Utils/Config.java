@@ -69,7 +69,7 @@ public class Config {
             throw new RuntimeException(e);
         }
 
-        String timezone = Config.configProps.getProperty("timezone", "UTC");
+        String timezone = getTimezone();
 
         if (timezone != null && !timezone.isEmpty()) {
             if (!timezone.equals("UTC")) {
@@ -90,5 +90,49 @@ public class Config {
         Config.configProps = new Properties();
         Config.configProps.load(configReader);
         configReader.close();
+    }
+
+    // --- Typed configuration helpers ---
+
+    private static String getString(String key, String defaultValue) {
+        return configProps != null ? configProps.getProperty(key, defaultValue) : defaultValue;
+    }
+
+    private static boolean getBoolean(String key, boolean defaultValue) {
+        if (configProps == null) return defaultValue;
+        String value = configProps.getProperty(key);
+        return value != null ? value.equalsIgnoreCase("true") : defaultValue;
+    }
+
+    public static String getTimezone() {
+        return getString("timezone", "UTC");
+    }
+
+    public static String getJavaPath() {
+        return getString("java_path", "java");
+    }
+
+    public static boolean isDebugEnabled() {
+        return getBoolean("debug", false);
+    }
+
+    public static boolean isLogToFileEnabled() {
+        return getBoolean("log_to_file", true);
+    }
+
+    public static boolean isNetworkCheckEnabled() {
+        return getBoolean("network_check", true);
+    }
+
+    public static boolean isAutoUpdateLoaderEnabled() {
+        return getBoolean("auto_update_loader", false);
+    }
+
+    public static boolean isUniqueIdRequestEnabled() {
+        return getBoolean("unique_id_request", true);
+    }
+
+    public static String getUniqueId() {
+        return getString("unique_id", "");
     }
 }

@@ -342,10 +342,9 @@ public class Loader {
                 LogInfo("Starting installation of Loader, installer output incoming");
                 LogInfo("Check log from installer for more information");
 
-                String javaStart = "java";
-                if (Config.configProps.getProperty("java_path") != null && !Config.configProps.getProperty("java_path").equals("java")) {
-                    javaStart = Config.configProps.getProperty("java_path");
-                    LogDebug("Use for Installer Custom Java Path: " + Config.configProps.getProperty("java_path"));
+                String javaStart = Config.getJavaPath();
+                if (javaStart != null && !javaStart.equals("java")) {
+                    LogDebug("Use for Installer Custom Java Path: " + javaStart);
                 }
 
                 final Process installer = new ProcessBuilder(new String[]{javaStart, "-jar", Config.installerFile, "nogui", "--installServer"})
@@ -521,8 +520,7 @@ public class Loader {
         if (Config.minecraftVersion == null || Config.loaderVersion == null) return;
 
         String loaderLabel = Config.isForge ? "Forge" : "NeoForge";
-        String autoUpdate = Config.configProps.getProperty("auto_update_loader", "false");
-        if (!autoUpdate.equalsIgnoreCase("true")) {
+        if (!Config.isAutoUpdateLoaderEnabled()) {
             LogInfo("Forge-Version-Update: Disabled (set auto_update_loader=true in " + Config.PROPERTIES_FILE + " to enable).");
             return;
         }

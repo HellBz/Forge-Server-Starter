@@ -154,7 +154,7 @@ public class Data {
     }
 
     public static void LogDebug(final String message) {
-        if (Objects.equals(Config.configProps.getProperty("debug"), "true")) {
+        if (Config.isDebugEnabled()) {
             System.out.println(CurrentTime() + TXT_CYAN + "[F-S-S/DEBUG] " + TXT_RESET + message);
             try {
                 Data.doLog(CurrentTime() + "[F-S-S/DEBUG] " + cleanLog(message));
@@ -174,7 +174,7 @@ public class Data {
     }
 
     public static String CurrentTime() {
-        String timezone = Config.configProps.getProperty("timezone", "UTC");
+        String timezone = Config.getTimezone();
         if (timezone != null && !timezone.equals("UTC")) {
             ZoneId z = ZoneId.of(timezone);
             return "[" + ZonedDateTime.now(z).format(DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT)) + "] ";
@@ -188,7 +188,7 @@ public class Data {
     }
 
     public static void doLog(final String message) throws IOException {
-        if (Objects.equals(Config.configProps.getProperty("log_to_file"), "true")) {
+        if (Config.isLogToFileEnabled()) {
             try (FileWriter fileWriter = new FileWriter("logs/server-starter.log", true);
                  PrintWriter printWriter = new PrintWriter(fileWriter)) {
                 printWriter.println(message);  //New line
