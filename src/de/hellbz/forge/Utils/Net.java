@@ -3,6 +3,7 @@ package de.hellbz.forge.Utils;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.concurrent.*;
 
 import static de.hellbz.forge.Utils.Data.LogInfo;
 import static de.hellbz.forge.Utils.Data.LogWarning;
@@ -31,17 +32,33 @@ public class Net {
 
     public static void checkInternetConnection() {
         String[] hosts = {"www.google.com", "www.github.com"};
+        ExecutorService executor = Executors.newFixedThreadPool(hosts.length);
 
-        for (String host : hosts) {
-            try {
-                Socket socket = new Socket();
-                socket.connect(new InetSocketAddress(host, 80), 1000);
-                socket.close();
-                isConnected = true;
-                break; // Verbindung erfolgreich, beende die Schleife
-            } catch (IOException e) {
-                // Verbindung fehlgeschlagen, versuche den nächsten Host
+        try {
+            for (String host : hosts) {
+                Future<Boolean> future = executor.submit(() -> canReachHost(host));
+                try {
+                    if (future.get(2, TimeUnit.SECONDS)) {
+                        isConnected = true;
+                        return;
+                    }
+                } catch (InterruptedException | ExecutionException e) {
+                    // host unreachable or DNS failed
+                } catch (TimeoutException e) {
+                    future.cancel(true);
+                }
             }
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    private static Boolean canReachHost(String host) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, 80), 1500);
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 
