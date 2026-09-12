@@ -200,6 +200,9 @@ public class ServerStarter {
 
                     Process serverProcess = pb.start();
 
+                    // Shared restart flag between stdin and stdout threads
+                    final boolean[] restartRequested = {false};
+
                     // Thread to handle stdin forwarding (fixes Issue #18 - console broken with Java 17+)
                     Thread stdinForwarder = new Thread(() -> {
                         try {
@@ -208,6 +211,16 @@ public class ServerStarter {
                             PrintWriter serverWriter = new PrintWriter(new OutputStreamWriter(serverInput), true);
                             String line;
                             while ((line = consoleReader.readLine()) != null) {
+                                if (line.trim().equalsIgnoreCase("/restart")) {
+                                    restartRequested[0] = true;
+                                    LogInfo("Restart command detected from console - restarting server gracefully...");
+                                    try {
+                                        OutputStream out = serverProcess.getOutputStream();
+                                        out.write(("stop\n").getBytes());
+                                        out.flush();
+                                    } catch (IOException ignored) {}
+                                    continue;
+                                }
                                 serverWriter.println(line);
                             }
                         } catch (IOException e) {
@@ -218,7 +231,6 @@ public class ServerStarter {
                     stdinForwarder.start();
 
                     // Thread to handle stdout/stderr and detect /restart (Faster Restart feature)
-                    final boolean[] restartRequested = {false};
                     Thread stdoutReader = new Thread(() -> {
                         try {
                             BufferedReader reader = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
