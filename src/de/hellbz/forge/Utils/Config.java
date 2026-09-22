@@ -146,6 +146,10 @@ public class Config {
         return getBoolean("auto_update_loader", false);
     }
 
+    public static boolean isEulaPromptEnabled() {
+        return !getString("eula_prompt", "true").equalsIgnoreCase("false");
+    }
+
     /**
      * Returns true if the unique ID should be sent to the update API.
      */

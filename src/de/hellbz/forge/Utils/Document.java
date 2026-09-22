@@ -14,38 +14,40 @@ import java.util.Properties;
 public class Document {
 
     public static void Eula() throws IOException {
+        if (!Config.isEulaPromptEnabled()) {
+            return;
+        }
 
         java.io.File eulaFile = new java.io.File("eula.txt");
-
-        boolean eulaFileWrite = false;
-
         if (eulaFile.exists()) {
             Properties eulaProps = new Properties();
-            FileReader eulaReader = new FileReader(eulaFile);
-            // load the properties file and close
-            eulaProps.load(eulaReader);
-            eulaReader.close();
-
-            if (Objects.equals(eulaProps.getProperty("eula"), "false")) {
-                eulaFileWrite = true;
-                Data.LogInfo("Set Eula-File to true");
-            } else {
+            try (FileReader eulaReader = new FileReader(eulaFile)) {
+                eulaProps.load(eulaReader);
+            }
+            if (Objects.equals(eulaProps.getProperty("eula"), "true")) {
                 Data.LogInfo("Eula-File is already accepted.");
-            }
-        } else {
-            if (eulaFile.createNewFile()) {
-                eulaFileWrite = true;
-                Data.LogInfo("Creating a new Eula-File");
+                return;
             }
         }
 
-        if (eulaFileWrite) {
-            FileWriter eulaWriter = new FileWriter(eulaFile);
-            Properties eulaPropsNew = new Properties();
-            eulaPropsNew.setProperty("eula", "true");
-            eulaPropsNew.store(eulaWriter, "By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula).");
-            eulaWriter.close();
+        Data.LogWarning("You must read and agree to the Minecraft EULA before the server can start.");
+        Data.LogWarning("By accepting, you agree to the rules and terms in the Minecraft EULA:");
+        Data.LogWarning("https://aka.ms/MinecraftEULA");
+        Data.LogWarning("The EULA includes the rules for using and operating Minecraft server software.");
+        System.out.print("Type 'true' to confirm that you have read and agree to the Minecraft EULA: ");
+        BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
+        String confirmation = consoleReader.readLine();
+        if (!"true".equalsIgnoreCase(confirmation == null ? "" : confirmation.trim())) {
+            Data.LogWarning("Minecraft EULA was not accepted. The Eula-File remains unchanged.");
+            return;
         }
+
+        Properties eulaProps = new Properties();
+        eulaProps.setProperty("eula", "true");
+        try (FileWriter eulaWriter = new FileWriter(eulaFile)) {
+            eulaProps.store(eulaWriter, "By changing the setting below to TRUE you are indicating your agreement to the Minecraft EULA (https://aka.ms/MinecraftEULA).");
+        }
+        Data.LogInfo("Minecraft EULA accepted by explicit user confirmation.");
     }
 
     public static void StartFile() {

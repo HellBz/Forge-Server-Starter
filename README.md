@@ -15,7 +15,7 @@ A lightweight JAR that replaces traditional `.sh` / `.bat` files for launching F
 - **Faster Restart** — Type `/restart` in the server console for a graceful restart without stopping the Server Starter
 - **Auto Loader Update** — Optionally update Forge/NeoForge to the latest version on every start
 - **Network Check Toggle** — Skip the internet check for restricted networks (firewalls, proxies)
-- **Automatic EULA Creation** — Creates `eula.txt` automatically for faster first startup
+- **Optional EULA Prompt** — Can request explicit EULA acceptance before the first server start
 - **Custom Timezone & Java Path** — Configurable in `server_starter.conf`
 - **Logging & Debugging** — All events logged to file, debug mode available
 - **Version Checker** — Checks for updates on GitHub and notifies in the log
@@ -71,6 +71,7 @@ debug=false                   # Enable debug logging
 log_to_file=true              # Log to file
 network_check=true            # Set to false to skip internet check
 auto_update_loader=false      # Set to true for automatic loader updates
+eula_prompt=true              # Require explicit EULA acceptance by typing true
 unique_id_request=true        # Set to false to disable update API calls
 ```
 
