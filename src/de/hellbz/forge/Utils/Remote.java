@@ -65,8 +65,9 @@ public class Remote {
                 if (committedDate != null) {
                     Data.LogWarning("Latest Update is from: " + committedDate + " on GitHub.");
                 }
-                Data.LogWarning("You find the newest Versions there:");
-                Data.LogWarning("https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
+                Data.LogWarning("You find the newest Versions here:");
+                Data.LogWarning("GitHub: https://github.com/HellBz/Forge-Server-Starter/releases/latest");
+                Data.LogWarning("CurseForge: https://www.curseforge.com/minecraft/mc-mods/forge-server-starter");
                 Data.LogWarning("----------------------------------------------------------------");
             } else {
                 Data.LogInfo("----------------------------------------------------------------");
