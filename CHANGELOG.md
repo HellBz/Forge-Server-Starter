@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.7.0] - 2026-09-22
+
+### Added
+- Explicit Minecraft EULA confirmation prompt requiring the user to type `true`
+- `eula_prompt` configuration option, enabled by default and disabled only by an explicit `false`
+- Official Minecraft EULA link in the confirmation prompt
+- GitHub Releases link in update notifications alongside CurseForge
+
+### Changed
+- `eula.txt` is no longer created or accepted without explicit user consent
+
 ## [3.6.3] - 2026-09-13
 
 ### Fixed
